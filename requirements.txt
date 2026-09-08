@@ -1,0 +1,27 @@
+# ── Web dashboard（FastAPI 後端）──
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+
+# ── 爬蟲 / 瀏覽器自動化 ──
+playwright>=1.40.0
+playwright-stealth>=2.0.0
+beautifulsoup4>=4.12.0
+
+# ── 資料 / 模板 ──
+pyyaml>=6.0
+jinja2>=3.1.0
+markupsafe>=2.1.0
+python-pptx>=1.0.0        # 面接スライド生成（prep.py interview slides stage）
+edge-tts>=7.2.0            # 想定問答音声化（prep.py interview voice stage、無料・API key 不要）
+
+# ── LLM provider 層（API 呼叫用）──
+requests>=2.31.0
+httpx>=0.27.0
+
+# ── PDF（jac_recruitment 的添付求人票；未導入なら本文のみで動作）──
+pdfplumber>=0.11.0
+
+# ── Gmail（inbox / recruiter_agent / jac_recruitment，可選功能）──
+google-api-python-client>=2.0.0
+google-auth-oauthlib>=1.0.0
+google-auth-httplib2>=0.1.0

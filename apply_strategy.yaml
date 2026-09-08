@@ -1,0 +1,25 @@
+waves:
+  max_per_wave: [8, 12, 15]
+  cooldown_days: 5
+  trigger_on_reply: true
+
+daily:
+  max_submit: 3
+  jp_hours: [9, 11]
+  foreign_hours: [10, 14]
+
+# score_weight 0（2026-07 去重複計分）：入池已用 recommend_score≥60 篩過，
+# 基礎評分的年収/AI 關鍵字維度與推薦度重疊，再加權一次 = 三重計分。
+scoring:
+  recommend_weight: 0.7
+  location_weight: 0.3
+  score_weight: 0
+  agent_penalty: 2
+
+location_scores:
+  japan: 100
+  remote: 80
+  overseas: 30
+
+dedup:
+  same_company_max: 1

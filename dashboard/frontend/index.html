@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JobPilot</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+    <style>
+      html { scrollbar-gutter: stable; }
+      body { margin: 0; background: #FFF8F0; font-family: "Noto Sans JP", sans-serif; color: #5A5248; }
+      * { box-sizing: border-box; }
+      table { border-collapse: collapse; }
+      button { font-family: inherit; cursor: pointer; }
+      input, select { font-family: inherit; }
+      ::selection { background: #F5C84266; }
+      :focus-visible { outline: 2px solid #F5C842; outline-offset: 2px; border-radius: 4px; }
+      /* アニメーション：淡入+輕位移，無 overshoot（生産性ツールに適した抑制） */
+      @keyframes riseIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes panelIn {
+        from { opacity: 0; transform: translateY(-8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+      }
+      /* markdown 渲染容器：表格對齊、標題降級、code 才用米底 */
+      .md-body h1 { font-size: 20px; line-height: 1.5; }
+      .md-body h2 { font-size: 16px; }
+      .md-body h3 { font-size: 14px; }
+      .md-body table { border-collapse: collapse; width: 100%; font-size: 12px; }
+      .md-body td, .md-body th { padding: 6px 12px; border-bottom: 1px solid #E8D5B7; text-align: left; }
+      .md-body code, .md-body pre { background: #FFF8F0; border-radius: 6px; padding: 2px 6px; font-size: 12px; }
+      .md-body pre { padding: 10px; overflow-x: auto; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,120 @@
+# 職務経歴書/履歴書 結構化數據 — 複製為 data.yaml 後填寫
+# ─────────────────────────────────────────────────────────
+# resume/jp/render.py 用此檔渲染 履歴書/職務経歴書 HTML+PDF。
+# TODO = 填入你的內容；列表只保留 1 個元素當結構樣本,可自由增減。
+profile:
+  family_name: TODO
+  given_name: TODO
+  family_kana: TODO
+  given_kana: TODO
+  birth_date: TODO
+  age: 0
+  gender: TODO
+  nationality: TODO
+  marital: TODO
+  dependents: 0
+contact:
+  address_kana: TODO
+  postal_code: TODO
+  address: TODO
+  phone: TODO
+  email: TODO
+  linkedin: TODO
+  github: TODO
+  portfolio: TODO
+position:
+  title: TODO
+  tagline: TODO
+  one_liner: TODO
+photo:
+  path: TODO
+rirekisho:
+  education:
+  - year: TODO
+    month: TODO
+    org: TODO
+    action: TODO
+  career_summary:
+  - year: TODO
+    month: TODO
+    org: TODO
+    action: TODO
+  qualifications:
+  - year: TODO
+    month: TODO
+    title: TODO
+  commute_minutes: TODO
+  hopes: TODO
+shokumu:
+  summary: TODO
+  competencies:
+  - category: TODO
+    items:
+    - TODO
+  experiences:
+  - company: TODO
+    period_start: TODO
+    period_end: TODO
+    industry: TODO
+    size: TODO
+    title: TODO
+    product: TODO
+    responsibilities:
+    - TODO
+    achievements:
+    - metric: TODO
+      value: TODO
+      note: TODO
+  recent_sprint:
+    title: TODO
+    description: TODO
+    projects:
+    - name: TODO
+      period: TODO
+      role: TODO
+      product: TODO
+      stack: TODO
+      responsibilities:
+      - TODO
+      advantages:
+      - TODO
+      achievements:
+      - metric: TODO
+        value: TODO
+        note: TODO
+  self_pr:
+    headline: TODO
+    bullets:
+    - title: TODO
+      body: TODO
+    caveat: TODO
+    closing: TODO
+  certifications:
+  - TODO
+application_meta:
+  availability:
+    notice_period: TODO
+    earliest_start_date: TODO
+  salary_expectations:
+    current_annual_jpy: TODO
+    desired_annual_jpy: TODO
+    desired_range_min_jpy: TODO
+    desired_range_max_jpy: TODO
+    negotiable: true
+  work_authorization:
+    visa_status: TODO
+    work_restrictions: TODO
+    requires_sponsorship: false
+  preferences:
+    location_preference:
+    - TODO
+    employment_type:
+    - TODO
+    remote_acceptance: TODO
+    travel_acceptance: TODO
+    relocation: false
+  reason_for_change:
+    summary: TODO
+    detail: TODO
+  interests:
+  - TODO

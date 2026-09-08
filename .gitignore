@@ -1,0 +1,68 @@
+auth/cookies/
+data/secrets/
+data/*.sqlite
+data/context-profile/_corpus/
+data/context-profile/_corpus_stats.json
+data/context-profile/_findings_raw.md
+data/context-profile/_signals.json
+data/context-profile/PROFILE.md
+data/context-profile/articles/
+output/
+resume/jp/output/
+portfolio/deck/
+portfolio/site-landing/
+__pycache__/
+.DS_Store
+*.db
+node_modules/
+dist/
+package-lock.json
+參考資料/
+.claude/*
+# skills はプロジェクト資産なので版管理する（settings.local.json 等は除外のまま）。
+# 親ディレクトリを丸ごと除外すると git が中へ降りないので `.claude/*` にすること。
+!.claude/skills/
+tsconfig.tsbuildinfo
+shokumu-keirekisho*.html
+
+# 暫存/log
+_*.json
+_*.log
+_*.py
+!__init__.py
+!__main__.py
+data/*.bak-*
+参考資料/
+
+# 含硬編碼 secret 的 launchd plist
+scripts/com.jp-pm-jobs.inbox-scan.plist
+
+# ── 個人資料（用 *.example 範本自建；已追蹤的私有檔不受影響）──
+config/app.yaml
+config/llm.yaml
+config/llm.gap.yaml
+config/scraping.yaml
+config/notify.yaml
+config/tts.yaml
+config/resume.yaml
+config/redaction.yaml
+config/prep.yaml
+data/candidate_profile.yaml
+data/candidate_profile_*.yaml
+data/cognitive_profile.yaml
+data/tech_footprint.yaml
+data/blacklist.yaml
+data/frameworks.yaml
+data/proposal_lessons.yaml
+resume/jp/data.yaml
+dashboard/frontend/src/vn/scripts.main.ts
+.env
+
+# 面試生成物（個人內容，生成腳本輸出）
+interview/generated/
+# 面接 deck 母版（含姓名等個資，模板由使用者自備）
+interview/slides_master.pptx
+
+# QA core 一次性建構的中間狀態（內容已落地到 core/*.md）
+interview/question-bank/core/.build_checkpoint.json
+analysis/

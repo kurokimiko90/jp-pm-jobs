@@ -1,0 +1,14 @@
+# AI 職涯助手設定範本 — 複製為 config/assistant.yaml 後修改（缺檔 = 全用以下預設值）
+
+# 互動問答用模型（求快，Haiku 等級即可）
+chat_model: claude-haiku-4-5
+
+# 每週總結歸納用模型（量夠大才需要較強模型做主題聚類）
+digest_model: claude-sonnet-4-5
+
+# 每輪問答帶入 prompt 的歷史輪數（多輪對話上下文）
+history_window: 6
+
+# ── 排程總結（scripts/assistant_daily_digest.sh / assistant_weekly_digest.sh）──
+daily_digest_enabled: true
+weekly_digest_enabled: true

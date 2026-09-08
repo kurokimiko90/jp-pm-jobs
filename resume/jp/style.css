@@ -1,0 +1,408 @@
+/* 履歴書 + 職務経歴書 共用 design system
+ * Modern Minimal · Senior PM
+ * Inter (EN) + Hiragino Sans (JP) · Navy accent
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --color-text: #1a1a1a;
+  --color-text-soft: #555;
+  --color-text-muted: #888;
+  --color-accent: #1e3a5f;
+  --color-accent-soft: #4a6789;
+  --color-border: #e5e7eb;
+  --color-border-soft: #f0f1f3;
+  --color-bg: #ffffff;
+  --color-bg-soft: #fafbfc;
+
+  --font-sans: 'Inter', 'Hiragino Sans', 'Yu Gothic UI', 'Meiryo', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  font-size: 10.5pt;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'palt';  /* JP 比例字距 */
+}
+
+body {
+  background: #e8eaed;
+  padding: var(--space-6) 0;
+}
+
+.page {
+  background: var(--color-bg);
+  width: 210mm;
+  min-height: 297mm;
+  padding: 16mm 18mm;
+  margin: 0 auto var(--space-6);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  page-break-after: always;
+}
+
+.page:last-child { page-break-after: auto; }
+
+/* --- Typography --- */
+h1, h2, h3, h4 {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+}
+h1 { font-size: 22pt; font-weight: 700; letter-spacing: -0.02em; }
+h2 {
+  font-size: 11pt;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-accent);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1.5px solid var(--color-accent);
+}
+h3 { font-size: 12pt; font-weight: 600; margin-bottom: var(--space-2); }
+h4 { font-size: 10pt; font-weight: 600; color: var(--color-accent-soft); }
+
+p { margin: 0 0 var(--space-3); color: var(--color-text); }
+small, .small { font-size: 8.5pt; color: var(--color-text-muted); }
+
+a { color: var(--color-accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* --- Cover band (header) --- */
+.cover {
+  border-bottom: 2px solid var(--color-accent);
+  padding-bottom: var(--space-5);
+  margin-bottom: var(--space-6);
+}
+.cover .name-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-4);
+}
+.cover .title {
+  font-size: 11pt;
+  color: var(--color-accent);
+  font-weight: 500;
+  margin-top: var(--space-2);
+  letter-spacing: 0.02em;
+}
+.cover .one-liner {
+  font-size: 12pt;
+  font-weight: 500;
+  color: var(--color-text);
+  margin-top: var(--space-3);
+  line-height: 1.4;
+}
+.cover .contact-row {
+  display: flex;
+  gap: var(--space-5);
+  margin-top: var(--space-4);
+  font-size: 9pt;
+  color: var(--color-text-soft);
+  flex-wrap: wrap;
+}
+.cover .contact-row span::before {
+  content: '·';
+  margin-right: var(--space-2);
+  color: var(--color-text-muted);
+}
+.cover .contact-row span:first-child::before { content: ''; margin: 0; }
+
+/* --- Section --- */
+.section { margin-bottom: var(--space-6); }
+.section + .section { margin-top: var(--space-6); }
+
+/* --- Two-column layout (timeline + narrative) --- */
+.two-col {
+  display: grid;
+  grid-template-columns: 38mm 1fr;
+  gap: var(--space-5);
+  align-items: start;
+}
+.two-col .meta {
+  font-size: 9pt;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+  padding-right: var(--space-3);
+  border-right: 1px solid var(--color-border);
+}
+.two-col .meta .period {
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: 9.5pt;
+  margin-bottom: var(--space-1);
+}
+.two-col .meta .industry { margin-top: var(--space-1); }
+
+.two-col .content h3 { margin-bottom: var(--space-1); }
+.two-col .content .product {
+  font-size: 9.5pt;
+  color: var(--color-text-soft);
+  font-style: italic;
+  margin-bottom: var(--space-3);
+}
+
+/* --- Bullet list --- */
+ul.bullets { list-style: none; margin: 0; padding: 0; }
+ul.bullets li {
+  position: relative;
+  padding-left: var(--space-4);
+  margin-bottom: var(--space-2);
+  font-size: 10pt;
+  line-height: 1.5;
+}
+ul.bullets li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 0.7em;
+  width: 4px;
+  height: 4px;
+  background: var(--color-accent);
+  border-radius: 50%;
+}
+
+/* --- Metric callout grid --- */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+.metric {
+  background: var(--color-bg-soft);
+  border-left: 3px solid var(--color-accent);
+  padding: var(--space-3) var(--space-4);
+  border-radius: 0 4px 4px 0;
+}
+.metric .value {
+  font-size: 16pt;
+  font-weight: 700;
+  color: var(--color-accent);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.metric .label {
+  font-size: 8.5pt;
+  color: var(--color-text-soft);
+  margin-top: var(--space-2);
+  display: block;
+}
+.metric .note {
+  font-size: 8.5pt;
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+}
+
+/* --- Skill chips --- */
+.competencies {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+.competency {
+  display: grid;
+  grid-template-columns: 38mm 1fr;
+  gap: var(--space-3);
+  align-items: start;
+}
+.competency .cat {
+  font-size: 9.5pt;
+  font-weight: 600;
+  color: var(--color-accent);
+  padding-top: 2pt;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.chip {
+  display: inline-block;
+  padding: 2pt 8pt;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-size: 8.5pt;
+  color: var(--color-text-soft);
+  background: var(--color-bg);
+  white-space: nowrap;
+}
+
+/* --- Recent sprint grid --- */
+.sprint-projects {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+.sprint-project {
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: var(--space-4);
+}
+.sprint-project .name {
+  font-weight: 700;
+  font-size: 11pt;
+  color: var(--color-accent);
+  margin-bottom: var(--space-1);
+}
+.sprint-project .one-liner {
+  font-size: 9pt;
+  color: var(--color-text);
+  margin-bottom: var(--space-3);
+  line-height: 1.4;
+}
+.sprint-project .stats {
+  display: flex;
+  gap: var(--space-3);
+  font-size: 8pt;
+  color: var(--color-text-muted);
+  border-top: 1px solid var(--color-border-soft);
+  padding-top: var(--space-2);
+  margin-top: var(--space-2);
+}
+.sprint-project .stats strong { color: var(--color-text); font-weight: 600; }
+
+/* --- Self PR (高級設計重點區) --- */
+.self-pr {
+  background: linear-gradient(180deg, var(--color-bg-soft) 0%, var(--color-bg) 100%);
+  border-left: 3px solid var(--color-accent);
+  padding: var(--space-5);
+  margin-top: var(--space-4);
+  border-radius: 0 6px 6px 0;
+}
+.self-pr .headline {
+  font-size: 13pt;
+  font-weight: 600;
+  color: var(--color-accent);
+  margin-bottom: var(--space-4);
+  letter-spacing: -0.01em;
+}
+.self-pr .pr-bullet {
+  margin-bottom: var(--space-4);
+}
+.self-pr .pr-bullet:last-of-type { margin-bottom: var(--space-3); }
+.self-pr .pr-bullet .pr-title {
+  font-weight: 600;
+  font-size: 10.5pt;
+  color: var(--color-text);
+  margin-bottom: var(--space-1);
+}
+.self-pr .pr-bullet .pr-body {
+  font-size: 9.5pt;
+  color: var(--color-text-soft);
+  line-height: 1.55;
+}
+.self-pr .caveat {
+  border-top: 1px dashed var(--color-border);
+  padding-top: var(--space-3);
+  margin-top: var(--space-3);
+  font-size: 9pt;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+.self-pr .caveat::before {
+  content: '↳ ';
+  color: var(--color-accent-soft);
+  font-style: normal;
+}
+
+/* --- 履歴書専用 grid table --- */
+.rireki-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10pt;
+}
+.rireki-table th, .rireki-table td {
+  border: 1px solid var(--color-border);
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  vertical-align: top;
+}
+.rireki-table th {
+  background: var(--color-bg-soft);
+  font-weight: 600;
+  color: var(--color-text);
+  width: 30mm;
+}
+.rireki-table .col-year { width: 18mm; text-align: center; color: var(--color-text-soft); }
+.rireki-table .col-month { width: 14mm; text-align: center; color: var(--color-text-soft); }
+
+.rireki-grid {
+  display: grid;
+  grid-template-columns: 1fr 40mm;
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+.photo-frame {
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-soft);
+  aspect-ratio: 30 / 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-size: 8.5pt;
+  text-align: center;
+  line-height: 1.4;
+}
+.photo-frame img { width: 100%; height: 100%; object-fit: cover; }
+.profile-block { margin-bottom: var(--space-4); }
+.profile-block .field-label {
+  font-size: 8pt;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+  margin-bottom: 2pt;
+}
+.profile-block .field-value {
+  font-size: 11pt;
+  color: var(--color-text);
+}
+
+/* --- Page footer --- */
+.page-footer {
+  position: absolute;
+  bottom: 10mm;
+  left: 18mm;
+  right: 18mm;
+  border-top: 1px solid var(--color-border-soft);
+  padding-top: var(--space-2);
+  display: flex;
+  justify-content: space-between;
+  font-size: 8pt;
+  color: var(--color-text-muted);
+}
+
+/* --- Print --- */
+@media print {
+  body { background: white; padding: 0; }
+  .page {
+    box-shadow: none;
+    margin: 0;
+    width: 210mm;
+    min-height: 297mm;
+  }
+}
+
+@page {
+  size: A4;
+  margin: 0;
+}

@@ -1,0 +1,10 @@
+# Gap 分析專用 LLM 鏈範本 — 想讓 gap 批次只走特定 provider（不 fallback）時使用。
+# 複製為 config/llm.gap.yaml 後，scripts/daily_job_scan.sh 會自動以 LLM_CONFIG 指向它。
+# 不建此檔 = gap 分析沿用 config/llm.yaml（或自動偵測）的一般鏈。
+chain:
+  - miko_gateway   # 換成你的 provider：anthropic / openai / gemini / cli / miko_gateway
+
+providers:
+  miko_gateway:
+    base_url: http://localhost:3005
+    engine: codex

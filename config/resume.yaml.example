@@ -1,0 +1,13 @@
+# 投遞用の完成済み書類パス（缺檔 = tools/resume_assets.py の既定値）
+# cp config/resume.yaml.example config/resume.yaml して、最新版に差し替える。
+#
+# 職務経歴書は「そのまま添付する完成版」。履歴書は基底として使い、
+# 「志望の動機など」欄だけ JD ごとに tools/rirekisho_tailor.py が差し替える。
+
+# 職務経歴書（HTML は match_brief のキーワード照合用、PDF が添付本体）
+shokumu_html: resume/jp/output/shokumu-3page-0724-quiet.html
+shokumu_pdf: resume/jp/output/shokumu-3page-0724-quiet.pdf
+
+# 履歴書（HTML = 志望動機を差し替える基底、PDF = 特化生成に失敗した時の退避）
+rirekisho_html: resume/jp/output/rirekisho-0725-quiet.html
+rirekisho_pdf: resume/jp/output/rirekisho-0725-quiet.pdf

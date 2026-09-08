@@ -1,0 +1,55 @@
+# TTS provider 設定（複製為 tts.yaml 後編輯；缺檔時預設 local_macos）
+# ─────────────────────────────────────────────
+# chain: 依序嘗試的 provider，首個成功者勝出。
+#   edge_tts    — Microsoft Edge TTS（無料・免 API key・要網路；pip install edge-tts）
+#   local_macos — macOS `say` 指令（離線備援；音質較機械）
+
+chain: [edge_tts, local_macos]
+
+providers:
+  edge_tts:
+    default_voice_ja: ja-JP-NanamiNeural   # edge-tts --list-voices 可查
+    default_voice_en: en-US-AriaNeural
+    rate: "+0%"                             # 語速（如 "+10%" / "-5%"）
+  local_macos:
+    say_bin: say
+    afconvert_bin: afconvert
+    default_voice_ja: Kyoko
+    default_voice_en: Samantha
+    output_format: wav
+
+# 面接シアター逐句語音的角色聲線（面試官 / 候選人分聲）
+theater:
+  voice_interviewer: ja-JP-KeitaNeural
+  voice_candidate: ja-JP-NanamiNeural
+
+# 想定問答の音声化エンジン
+#   gpt     — ChatGPT（ブラウザ・本人アカウント）に話し言葉へ書き直させ、
+#             「読み上げ」の音声を MediaSource から直接捕捉する。実際に面接で
+#             話す速度・間になる代わり、1 問あたり 40 秒前後かかる。
+#   theater — edge_tts 逐句合成（面接シアターと同じ音檔庫、数秒・zero-token）。
+#             gpt が失敗したときの受け皿にもなる。
+voice_engine: theater
+
+gpt_voice:
+  # 音声化の実行主体
+  #   auto  — miko-ws 指揮中心（POST /api/llm/voice）が生きていればそちら。
+  #           ChatGPT アカウントを 4 つ順に試すので、1 アカウントが時間切れ・
+  #           未ログインでも録り切れる（推奨）
+  #   miko  — 指揮中心のみ（落ちていれば失敗させる）
+  #   local — 本機の Chrome のみ（下の cdp_port / user_data_dir を使う）
+  backend: auto
+  # ⚠️ local バックエンドの Chrome は user_data_dir を占有する。miko-ws の
+  #    chatgpt2 アカウントと同じプロファイルなので、開いている間は指揮中心側の
+  #    chatgpt2 が使えない（録り終わったらこの Chrome は閉じてよい）。
+  cdp_port: 9261
+  batch_size: 20                     # 1 メッセージにまとめる問数（音声取得は再生速度に縛られないので、
+                                     #   まとめるほど 1 問あたりの固定オーバーヘッドが減る）
+  user_data_dir: ~/.chrome-chatgpt2  # ChatGPT にログイン済みの Chrome プロファイル
+  temporary_chat: false              # true にすると読み上げが鳴らない（ChatGPT 側の制約）
+  answer_timeout: 120                # 1 問の書き直し待ち（秒）
+  audio_timeout: 240                 # 読み上げ捕捉の上限（秒）
+  silence_seconds: 6                 # 最後の音声チャンクからこの秒数で再生終了とみなす
+  retries: 1                         # バッチが失敗したときの録り直し回数（1 バッチ = batch_size 問なので、瞬断で
+                                     #   まとめて失う方が高くつく）
+  miko_failover_after: 2             # 指揮中心がこの回数連続で失敗したら残りは本機 Chrome で録る

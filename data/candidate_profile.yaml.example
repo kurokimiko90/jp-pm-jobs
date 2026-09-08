@@ -1,0 +1,205 @@
+# 候選人畫像（唯一真實來源）— 複製為 candidate_profile.yaml 後填寫
+# ─────────────────────────────────────────────────────────
+# 這是 gap 分析 / 投遞包 / 面試準備的資料來源。零編造紀律：
+# 只填真實經歷；沒有的項目直接刪掉該 key（程式會跳過缺項）。
+# TODO = 填入你的內容；列表只保留了 1 個元素當結構樣本,可自由增減。
+# identity / contact 永不外送 LLM（tools/deid.py 白名單機制）。
+identity:
+  nationality: TODO
+  visa_status: TODO
+  requires_sponsorship: false
+  work_restrictions: TODO
+  years_in_product: 0
+  years_total_career: 0
+  years_in_japan: 0
+positioning:
+  title: TODO
+  tagline: TODO
+  one_liner: TODO
+  seniority_fit:
+  - TODO
+  role_fit:
+  - TODO
+  role_avoid:
+  - TODO
+compensation:
+  current_annual: 0
+  desired_annual: 0
+  desired_min: 0
+  desired_max: TODO
+  scorer_target_min: 0
+  scorer_target_max: 0
+  negotiable: true
+conditions:
+  location_preference:
+  - TODO
+  employment_type:
+  - TODO
+  remote_acceptance: TODO
+  travel: TODO
+  relocation: false
+  notice_period: TODO
+languages:
+  ja: TODO
+  zh: TODO
+  en: TODO
+education:
+- TODO
+education_detail:
+  highest_degree: TODO
+  graduate_school:
+    name: TODO
+    degree: TODO
+    major: TODO
+    ml_coursework:
+      description: TODO
+      math_training: TODO
+      relevance: TODO
+    system_audit_coursework:
+      description: TODO
+      relevance: TODO
+    python_experience:
+      description: TODO
+      relevance: TODO
+certifications:
+- TODO
+domains:
+  strong:
+  - TODO
+  solid:
+  - TODO
+  exposure:
+  - TODO
+  none:
+  - TODO
+sier_experience:
+  has_experience: true
+  scope: TODO
+  evidence:
+  - TODO
+  known_limit: TODO
+skills:
+  tech:
+    languages:
+    - TODO
+    web:
+    - TODO
+    libraries:
+    - TODO
+    ai_services:
+    - TODO
+    agent_frameworks:
+    - TODO
+    cloud_infra:
+    - TODO
+    data_db:
+    - TODO
+    tools:
+    - TODO
+  ai_llm:
+  - TODO
+  pm:
+  - TODO
+  background:
+  - TODO
+  role_years_breakdown:
+    java_engineer: TODO
+    marketing_assistant: TODO
+    pjm_assistant: TODO
+    pdm: TODO
+  proficiency_years:
+    high:
+    - TODO
+    mid:
+    - TODO
+    low:
+    - TODO
+experience:
+- company: TODO
+  period: TODO
+  location: TODO
+  industry: TODO
+  size: TODO
+  title: TODO
+  product: TODO
+  sier: true
+  concurrent_projects: 0
+  scope: TODO
+  key_achievements:
+  - TODO
+  plain_summary: TODO
+  plain_highlights:
+  - TODO
+  highlights:
+  - TODO
+proof_projects:
+  theme: TODO
+  period: TODO
+  projects:
+  - name: TODO
+    plain_name: TODO
+    plain_summary: TODO
+    industry_match: TODO
+    target_roles:
+    - TODO
+    role: TODO
+    stack: TODO
+    highlights:
+    - TODO
+developer_tool_design:
+  summary: TODO
+  tools:
+  - name: TODO
+    user: TODO
+    onboarding: TODO
+    api_decisions:
+    - TODO
+    debug_visibility:
+    - TODO
+  langsmith_comparison:
+    context: TODO
+    my_approach:
+    - aspect: TODO
+      mine: TODO
+      langsmith: TODO
+      insight: TODO
+ai_engineering:
+  summary: TODO
+  items:
+  - name: TODO
+    before_after: TODO
+    cost_saving: TODO
+    evidence_project: TODO
+    bridge_to_current: TODO
+    team_scaling: TODO
+differentiators:
+  cognitive_data:
+    sample: TODO
+    metrics:
+      propose_first_pct: 0.0
+      executing_pct: 0.0
+      review_seeking_pct: 0.0
+      pm_lexicon_avg: 0.0
+      why_inquiry_pct: 0.0
+      certainty_confident_pct: 0.0
+      short_response_pct: 0.0
+    meaning: TODO
+  narrative:
+  - TODO
+  career_vision:
+  - TODO
+  signature_themes:
+  - TODO
+  self_pr_jp: TODO
+  say_do_consistency: TODO
+  source_files:
+  - TODO
+match_summary:
+  strengths_i_bring:
+  - TODO
+  known_gaps:
+  - TODO
+  negotiation_anchor: TODO
+  gap_bridge_map:
+  - gap_theme: TODO
+    counter: TODO

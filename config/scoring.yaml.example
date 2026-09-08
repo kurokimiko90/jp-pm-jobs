@@ -1,0 +1,145 @@
+# 評分器設定（複製為 scoring.yaml 後按你的求職偏好編輯）
+# ─────────────────────────────────────────────────────────
+# 不建 scoring.yaml 也能跑：程式碼內建預設值是「2026 日本 AI PM 市場」調校。
+# 換職種（如工程師 / 設計師 / 資料科學家）時，主要改：
+#   role_core_pm / market_keywords / domain_keywords / gap.tier1_keywords
+# 任何 key 都是「整個覆蓋」：只想改一項也要把該 key 的完整清單貼過來改。
+
+# 目標年收帶（萬円）。data/cognitive_profile.yaml 的 target_salary_min/max 優先於此。
+target_salary:
+  min: 900
+  max: 1800
+
+# ── 日本職缺 7 維權重（合計 100）─────────────────────────
+weights:
+  market_keywords: 22    # 市場關鍵字命中
+  tier_preference: 6     # 企業類型偏好
+  tech_overlap: 8        # 與你技術棧重合（讀 data/tech_footprint.yaml）
+  salary_fit: 35         # 薪資 vs 目標帶
+  remote_visa: 0         # 遠端/簽證加分
+  domain: 5              # 領域加分
+  role_fit: 24           # 職銜契合
+
+# ── 海外 ATS 職缺 5 維權重（合計 100；無薪資欄位，role_fit 代位主軸）──
+overseas_weights:
+  market_keywords: 20
+  tier_preference: 10
+  tech_overlap: 6
+  role_fit: 60
+  domain: 4
+
+# 純工程職懲罰係數（0-1；標題無 PM 字樣時乘上）
+eng_only_penalty: 0.6
+# 非目標職種重壓係數（JD 內容判定非 PM 時乘上，沉底不污染精選）
+pm_gate_penalty: 0.15
+
+# 企業類型 → 基礎分
+tier_preference:
+  ai_startup: 100
+  mega_venture: 80
+  traditional_sier: 60
+  unknown: 40
+
+# 市場熱詞（命中 4 個以上拿滿分）— 換職種時整批換掉
+market_keywords:
+  [llm, large language model, 生成 ai, 生成ai, genai,
+   multi-tenant, マルチテナント, finops, コスト最適化,
+   hallucination, ハルシネーション, agentic, ai エージェント, ai agent,
+   rag, retrieval augmented, fine-tuning, ファインチューニング,
+   prompt, プロンプト, claude, gemini, gpt-4, gpt-5, anthropic, openai,
+   mcp, model context protocol, product architect, 開発生産性,
+   dx推進, dx, デジタルトランスフォーメーション,
+   要件定義, 上流工程, システム企画, erp, 基幹システム, si, sier]
+
+# 領域加分關鍵字（命中 2 領域拿滿分）
+domain_keywords:
+  fintech: [fintech, 決済, payment, 金融, 銀行, 保険]
+  saas: [saas, b2b, enterprise]
+  ai: [ai, llm, ml, 機械学習, 生成 ai]
+
+# ── 職銜判定 ────────────────────────────────────────────
+# 核心目標職銜 → role_fit 100
+role_core_pm:
+  [product manager, product owner, product lead, head of product,
+   director of product, "director, product", vp product, vp of product,
+   group product manager, principal product, lead product manager,
+   staff product manager, technical product manager, ai product manager,
+   platform product manager, growth product manager, chief product,
+   プロダクトマネージャー, プロダクトマネジャー, プロダクトオーナー, プロダクト責任者]
+# 降分職銜（相近但非目標，如 PjM/PMO 之於 PdM）→ role_demote_score
+role_demote:
+  [technical program manager, program manager, project manager,
+   プロジェクトマネージャー, プロジェクトマネジャー, プロジェクトマネジメント]
+role_demote_score: 50
+# 鄰接職銜 → 50
+role_adjacent:
+  [product marketing, product analyst, product designer, product operations,
+   コンサルタント, コンサル, consultant, consulting, アドバイザー, advisor]
+# 職位類型分類（jobs.job_type = pdm/pjm/consulting/other，analyzer.jd_enrich 回填）：
+# consulting 判定用的詞（role_adjacent 的諮詢子集，獨立可調）
+role_consulting:
+  [コンサルタント, コンサル, consultant, consulting, アドバイザー, advisor]
+
+# 海外公司 tier 推斷：命中此清單 → ai_startup(100)，否則 mega_venture(80)
+frontier_ai_companies:
+  [anthropic, openai, mistral, cohere, hugging face, perplexity,
+   runway, stability, elevenlabs, deepl, aleph alpha, black forest,
+   glean, sierra, decagon, lovable, langchain, pinecone, synthesia,
+   isomorphic, wayve, helsing, physicsx, cradle, causaly, lakera,
+   hightouch, supabase, vercel, clay, amplemarket, legora]
+
+# ── gap 分析（推薦度公式）────────────────────────────────
+# gap 分析用的 LLM 模型偏好（provider 不認得此名時用自己的預設模型）
+gap_model: claude-haiku-4-5
+
+gap:
+  # 一級領域（命中 matched → domain 48 分）：你最想去的領域訊號
+  tier1_keywords:
+    [Fintech, 決済, LLM, AIエージェント, 生成AI, コーディングエージェント,
+     AI/LLM, 音声AI, 自律思考型AI, AI駆動, AI Agent, AI×]
+  # 二級領域（domain 34 分）
+  tier2_keywords:
+    [SaaS, 金融, AI機能, AI活用, DX, 流通, リテール, EdTech, フィンテック]
+  # 硬性排除訊號（出現在 JD 或 gaps → 無論總分多少皆為 skip）
+  hard_stop_keywords:
+    [採用対象外, 第二新卒, 重複応募, 重複企業, 3件重複, 3ポジション, 経験過剰, 過剰スペック]
+  # 舊版相容 key；正式版請改用下方 culture_risk_keywords。
+  sier_culture_keywords:
+    [SIer文化, 受託開発文化, ウォーターフォール, 客先常駐]
+  # 組織／文化風險（推薦度的 3% 維度）：JD 或 gap 任一命中就降分，
+  # 與 hard_stop 不同，這些不會單獨使職缺 skip。
+  culture_risk_keywords:
+    [SIer文化, システムインテグレータ, システムインテグレーター,
+     受託開発文化, 受託開発, ウォーターフォール, 客先常駐]
+
+  # 正式推薦度公式（合計必須為 100）。各維度先算 0–100 比例，再加權；
+  # hard_stop 命中時無論總分多少皆為 skip。
+  recommend_weights:
+    salary: 25                 # 年收帶：上限 70% + 下限 30%，對目標帶做連續評分
+    role_fit: 25               # PdM 核心職最高；PjM / PMO 明顯降分
+    company_product_stage: 15  # 規模適配、產品成熟、AI 導入／升級
+    requirements: 15           # must / important / preferred 逐條覆蓋率
+    domain: 8                  # AI / Fintech 等目標領域
+    evidence: 6                # matched 項是否附有可驗證經驗證據
+    work_conditions: 3         # 遠端、簽證與語言等可行性
+    culture_risk: 3            # SIer／受託／常駐等組織風險
+  # 公司／產品階段訊號偵測：正式公式會將規模／成熟度／AI 升級合成
+  # company_product_stage 的 0–100 分（再乘 15%）。bonus 參數只為舊資料相容。
+  sweet_spot:
+    size_bonus: 20            # 従業員數 ≥ employees_min +20（無上限）
+    employees_min: 100
+    size_missing_penalty: 2   # JD 抽不到従業員數 → −2
+    no_hit_penalty: 0.9       # 舊資料相容，weighted_v2 不使用
+    maturity_bonus: 15      # 成熟產品/穩定客戶訊號 +15
+    maturity_keywords:
+      [導入実績, 導入社数, 導入企業, 導入事例, 取引実績,
+       顧客基盤, 継続率, 解約率, チャーンレート,
+       arr, mrr, シェアno.1, シェアno1, トップシェア, 業界シェア,
+       東証, プライム上場, グロース上場, 上場企業, マザーズ,
+       大手企業, 有料契約, 黒字]
+    ai_upgrade_bonus: 15    # AI 導入/產品升級「進行中」訊號 +15
+    ai_upgrade_keywords:
+      [ai導入, aiの導入, ai活用, aiを活用, ai機能,
+       生成ai活用, 生成aiを, 生成aiの活用, llm活用, aiエージェント,
+       dx推進, リプレイス, リアーキテク, リニューアル, 刷新,
+       モダナイズ, レガシー, 第二創業, プロダクト再構築]

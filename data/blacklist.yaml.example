@@ -1,0 +1,7 @@
+# 絕對不投遞的公司（現職、利害衝突等）— 複製為 blacklist.yaml 後填寫
+# 比對方式：normalize 後 substring match（記得列出中/日/英各種寫法）
+companies:
+  - name: 現在の勤務先株式会社
+    reason: 現職
+  - name: Current Employer Inc
+    reason: 現職（英文名）

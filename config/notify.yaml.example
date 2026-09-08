@@ -1,0 +1,24 @@
+# 通知設定範本 — 複製為 config/notify.yaml 後修改（缺檔 = 全用以下預設值）
+# Telegram bot token / chat id 放 .env（TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID），
+# 不放這裡 — 本檔可進 git，.env 永不進 git。
+
+# ── 新高分職缺（scrape 後處理自動推送）──
+high_score_enabled: true
+high_score_threshold: 80      # score ≥ 此值才推
+
+# ── inbox 重要信件 ──
+inbox_enabled: true
+# 要推送的分類（可加 initial_contact / scheduling，預設只推三類避免噪音）
+inbox_categories: [interview_invite, offer, rejection]
+
+# ── 面試前日/當日提醒 ──
+interview_reminder_enabled: true
+
+# ── 面試已確定但缺會議URL（多為 r-agent，郵件本文不含連結，需自行查マイページ）──
+meeting_url_missing_enabled: true
+meeting_url_missing_interval_hours: 1   # 提醒間隔
+meeting_url_missing_max_attempts: 5     # 最多提醒次數（面試當天過後自動停止）
+
+# ── 互動 bot（notify/bot.py long-polling daemon）──
+# 允許觸發重任務（生成投遞包）的開關；關掉則按鈕只回覆提示
+bot_allow_prep_trigger: true

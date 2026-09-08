@@ -1,0 +1,4 @@
+interface:
+  display_name: "Interview QA Deep Dive"
+  short_description: "Grounded achievement reconstruction and adversarial QA"
+  default_prompt: "Use $interview-qa-deepdive to upgrade an interview pack with fact-grounded achievement reconstruction, deep follow-ups, and concise answers."

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  AI 職涯助手每週總結：每週日 21:00 推播本週問答主題歸納 + 應募漏斗趨勢。
+  安裝（把 /path/to/jp-pm-jobs 改成自己的）:
+    cp scripts/com.jp-pm-jobs.assistant-weekly-digest.plist.example \
+       ~/Library/LaunchAgents/com.jp-pm-jobs.assistant-weekly-digest.plist
+    （編輯路徑後）
+    launchctl load ~/Library/LaunchAgents/com.jp-pm-jobs.assistant-weekly-digest.plist
+  停用:
+    launchctl unload ~/Library/LaunchAgents/com.jp-pm-jobs.assistant-weekly-digest.plist
+  立即測一次:
+    launchctl start com.jp-pm-jobs.assistant-weekly-digest
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.jp-pm-jobs.assistant-weekly-digest</string>
+
+    <!-- 經 launchd_shim.py（python3 進入點）：TCC 不給背景 bash 讀 ~/Documents -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/opt/homebrew/bin/python3</string>
+        <string>/path/to/jp-pm-jobs/scripts/launchd_shim.py</string>
+        <string>/path/to/jp-pm-jobs/scripts/assistant_weekly_digest.sh</string>
+    </array>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Weekday</key>
+        <integer>0</integer>
+        <key>Hour</key>
+        <integer>21</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/path/to/jp-pm-jobs/output/logs/assistant-weekly-digest.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/path/to/jp-pm-jobs/output/logs/assistant-weekly-digest.err.log</string>
+
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>

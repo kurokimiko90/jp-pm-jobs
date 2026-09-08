@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>職務経歴書 — {{ name_ja }}（エージェント様用）</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap');
+
+:root {
+  --ink: #1a1a1a;
+  --ink-soft: #4a5568;
+  --ink-muted: #8896a8;
+  --accent: #1e3a5f;
+  --accent-soft: #4a6789;
+  --accent-dim: rgba(30,58,95,.06);
+  --border: #e2e8f0;
+  --border-soft: #f0f2f5;
+  --bg: #ffffff;
+  --bg-soft: #f8f9fb;
+  --mono: 'Inter', 'SF Mono', monospace;
+  --sans: 'Inter', 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { font-family: var(--sans); color: var(--ink); font-size: 13.8pt; line-height: 1.6; -webkit-font-smoothing: antialiased; font-feature-settings: 'palt'; }
+body { background: #e5e7eb; padding: 24px 0; }
+
+/* 流式単一ドキュメント（頁数無制限）。print 時に Chromium が A4 で自動分頁 */
+.doc {
+  background: var(--bg);
+  width: 210mm;
+  padding: 16mm 16mm 18mm;
+  margin: 0 auto;
+  box-shadow: 0 2px 20px rgba(0,0,0,.08);
+}
+
+@media print {
+  body { background: white; padding: 0; }
+  .doc { box-shadow: none; margin: 0; padding: 12mm 14mm; width: auto; }
+  .section, .exp, .proj, .pr-item { break-inside: avoid; }
+  .section-title { break-after: avoid; }
+}
+@page { size: A4; margin: 12mm 0; }
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 12px;
+  border-bottom: 2.5px solid var(--accent);
+  margin-bottom: 16px;
+}
+.header-left .kana { font-size: 9.6pt; color: var(--ink-muted); letter-spacing: .15em; margin-bottom: 2px; }
+.header-left h1 { font-size: 28.8pt; font-weight: 700; letter-spacing: -.02em; color: var(--ink); }
+.header-left .title-line { font-size: 12pt; color: var(--accent); font-weight: 600; margin-top: 4px; }
+.header-right { text-align: right; font-size: 9.6pt; color: var(--ink-soft); line-height: 1.7; padding-top: 6px; }
+.header-right .doc-title { font-size: 13.2pt; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+.header-right .for-agent { font-size: 8.4pt; color: var(--ink-muted); }
+
+.section { margin-bottom: 16px; }
+.section-title {
+  font-size: 10.8pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--accent);
+  padding-bottom: 4px;
+  border-bottom: 1.5px solid var(--accent);
+  margin-bottom: 10px;
+}
+
+.summary {
+  font-size: 11.4pt; line-height: 1.7; color: var(--ink-soft);
+  padding: 10px 14px; background: var(--accent-dim);
+  border-left: 3px solid var(--accent); border-radius: 0 4px 4px 0;
+}
+.summary strong { color: var(--ink); font-weight: 600; }
+
+/* 希望条件 — エージェント matching 用 */
+.cond-grid {
+  display: grid; grid-template-columns: auto 1fr; gap: 4px 14px;
+  font-size: 10.2pt; color: var(--ink-soft);
+  padding: 10px 14px; background: var(--bg-soft);
+  border: 1px solid var(--border); border-radius: 5px;
+}
+.cond-grid dt { color: var(--ink-muted); font-weight: 600; white-space: nowrap; }
+.cond-grid dd { color: var(--ink); }
+.cond-grid dd strong { color: var(--accent); font-weight: 700; }
+.tag-row { display: flex; flex-wrap: wrap; gap: 4px; }
+.tag {
+  display: inline-block; padding: 1px 8px;
+  border: 1px solid var(--accent-soft); border-radius: 999px;
+  font-size: 8.8pt; color: var(--accent); background: var(--bg);
+}
+
+.comp-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px 8px; }
+.comp-col h4 {
+  font-size: 9.6pt; font-weight: 700; color: var(--accent);
+  margin-bottom: 5px; text-transform: uppercase; letter-spacing: .08em;
+}
+.comp-col .chips { display: flex; flex-wrap: wrap; gap: 3px; }
+.chip {
+  display: inline-block; padding: 1.5px 7px;
+  border: 1px solid var(--border); border-radius: 999px;
+  font-size: 9pt; color: var(--ink-soft); background: var(--bg); white-space: nowrap;
+}
+
+.exp { display: grid; grid-template-columns: 34mm 1fr; gap: 12px; margin-bottom: 14px; align-items: start; }
+.exp-meta { font-size: 9.6pt; color: var(--ink-muted); line-height: 1.5; padding-right: 10px; border-right: 1px solid var(--border); }
+.exp-meta .period { font-weight: 700; font-size: 10.2pt; color: var(--ink); margin-bottom: 2px; }
+.exp-meta .info { margin-top: 1px; }
+.exp-body h3 { font-size: 12.6pt; font-weight: 700; color: var(--ink); margin-bottom: 1px; }
+.exp-body .role { font-size: 10.2pt; color: var(--accent-soft); font-weight: 600; margin-bottom: 6px; }
+
+ul.bl { list-style: none; padding: 0; margin: 0; }
+ul.bl li { position: relative; padding-left: 12px; margin-bottom: 3px; font-size: 10.5pt; line-height: 1.55; color: var(--ink-soft); }
+ul.bl li::before { content: ''; position: absolute; left: 1px; top: .65em; width: 4px; height: 4px; background: var(--accent); border-radius: 50%; }
+ul.bl li strong { color: var(--ink); font-weight: 600; }
+
+.metrics { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+.metric { background: var(--bg-soft); border-left: 2.5px solid var(--accent); padding: 5px 10px; border-radius: 0 4px 4px 0; flex: 1; min-width: 120px; }
+.metric .val { font-family: var(--mono); font-size: 15.6pt; font-weight: 700; color: var(--accent); line-height: 1.1; }
+.metric .lbl { font-size: 9pt; color: var(--ink-muted); margin-top: 2px; }
+
+/* 個人プロジェクト */
+.proj { margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border-soft); }
+.proj:last-child { border-bottom: none; }
+.proj-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 2px; }
+.proj-head h3 { font-size: 11.7pt; font-weight: 700; color: var(--ink); }
+.proj-head .role { font-size: 9.6pt; color: var(--accent-soft); font-weight: 600; white-space: nowrap; }
+.proj .stack { font-size: 8.8pt; color: var(--ink-muted); font-family: var(--mono); margin-bottom: 5px; }
+
+.pr-block { background: linear-gradient(180deg, var(--bg-soft) 0%, var(--bg) 100%); border-left: 3px solid var(--accent); padding: 10px 14px; border-radius: 0 5px 5px 0; }
+.pr-item { margin-bottom: 8px; }
+.pr-item:last-child { margin-bottom: 0; }
+.pr-item .pr-title { font-size: 11.4pt; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
+.pr-item .pr-body { font-size: 10.2pt; color: var(--ink-soft); line-height: 1.55; }
+
+.info-table { width: 100%; border-collapse: collapse; font-size: 10.2pt; }
+.info-table td { padding: 3px 8px; border-bottom: 1px solid var(--border-soft); vertical-align: top; }
+.info-table td:first-child { width: 28mm; color: var(--ink-muted); font-weight: 600; }
+.info-table .lang-row { display: flex; gap: 16px; flex-wrap: wrap; }
+.info-table .lang-row span { display: inline-flex; align-items: center; gap: 4px; }
+</style>
+</head>
+<body>
+
+{% macro render_exp(e) %}
+  <div class="exp">
+    <div class="exp-meta">
+      <div class="period">{{ e.period }}</div>
+      {% for t in e.tags %}<div class="info">{{ t }}</div>{% endfor %}
+    </div>
+    <div class="exp-body">
+      <h3>{{ e.company }}</h3>
+      {% if e.role %}<div class="role">{{ e.role }}</div>{% endif %}
+      <ul class="bl">
+        {% for b in e.bullets %}<li>{{ b | md_bold }}</li>{% endfor %}
+      </ul>
+      {% if e.metrics %}
+      <div class="metrics">
+        {% for m in e.metrics %}<div class="metric"><div class="val">{{ m.val }}</div><div class="lbl">{{ m.lbl }}</div></div>{% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+{% endmacro %}
+
+<div class="doc">
+
+  <div class="header">
+    <div class="header-left">
+      <div class="kana">{{ kana }}</div>
+      <h1>{{ name_ja }}</h1>
+      <div class="title-line">{{ headline_title or cond.headline_fallback }}</div>
+    </div>
+    <div class="header-right">
+      <div class="doc-title">職務経歴書</div>
+      <div class="for-agent">人材紹介エージェント様用</div>
+      {{ today }}<br>
+      {{ cond.visa_short }}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">職務要約</div>
+    <div class="summary">{{ summary | md_bold }}</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">希望条件・対象ポジション</div>
+    <dl class="cond-grid">
+      <dt>希望職種</dt>
+      <dd><div class="tag-row">{% for r in cond.role_fit %}<span class="tag">{{ r }}</span>{% endfor %}</div></dd>
+      <dt>希望役職</dt>
+      <dd>{{ cond.seniority_fit | join(' / ') }}</dd>
+      {% if cond.salary %}<dt>希望年収</dt><dd><strong>{{ cond.salary }}</strong></dd>{% endif %}
+      <dt>勤務地</dt>
+      <dd>{{ cond.location }}{% if cond.employment %} ／ {{ cond.employment }}{% endif %}{% if cond.travel %} ／ {{ cond.travel }}{% endif %}</dd>
+      <dt>経験年数</dt>
+      <dd>プロダクト職 約 {{ cond.years_product }} 年（通算 {{ cond.years_total }} 年 ／ 在日 {{ cond.years_japan }} 年）</dd>
+      <dt>就労資格</dt>
+      <dd>{{ cond.visa }}</dd>
+    </dl>
+  </div>
+
+  <div class="section">
+    <div class="section-title">コアコンピテンシー</div>
+    <div class="comp-grid">
+      {% for c in competencies %}
+      <div class="comp-col">
+        <h4>{{ c.title }}</h4>
+        <div class="chips">{% for chip in c.chips %}<span class="chip">{{ chip }}</span>{% endfor %}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">職務経歴</div>
+    {% for e in experiences %}{{ render_exp(e) }}{% endfor %}
+  </div>
+
+  {% if projects %}
+  <div class="section">
+    <div class="section-title">個人プロジェクト（AI 実装力の証拠）</div>
+    {% if projects_intro %}<div class="summary" style="margin-bottom:12px;font-size:10.5pt;">{{ projects_intro | md_bold }}</div>{% endif %}
+    {% for p in projects %}
+    <div class="proj">
+      <div class="proj-head">
+        <h3>{{ p.name }}</h3>
+        {% if p.role %}<span class="role">{{ p.role }}</span>{% endif %}
+      </div>
+      {% if p.stack %}<div class="stack">{{ p.stack }}</div>{% endif %}
+      <ul class="bl">{% for b in p.bullets %}<li>{{ b | md_bold }}</li>{% endfor %}</ul>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="section">
+    <div class="section-title">自己 PR</div>
+    <div class="pr-block">
+      {% for p in self_pr %}
+      <div class="pr-item">
+        <div class="pr-title">{{ p.title }}</div>
+        <div class="pr-body">{{ p.body | md_bold }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">学歴・資格・語学</div>
+    <table class="info-table">
+      {% for e in cond.education %}
+      <tr><td>{% if loop.first %}学歴{% endif %}</td><td>{{ e }}</td></tr>
+      {% endfor %}
+      {% for c in cond.certifications %}
+      <tr><td>{% if loop.first %}資格{% endif %}</td><td>{{ c }}</td></tr>
+      {% endfor %}
+      <tr>
+        <td>語学</td>
+        <td><div class="lang-row">{% for l in cond.languages %}<span>{{ l }}</span>{% endfor %}</div></td>
+      </tr>
+    </table>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,141 @@
+# 指標框架庫 — metrics stage 的骨架來源
+#
+# 用途：LLM 建指標樹時從這裡挑框架，避免每次自由發揮導致結構不一致。
+# Gate A 會檢查產出是否包含「北極星 / 輸入指標 / 護欄指標」三層。
+
+frameworks:
+  north_star:
+    name: 北極星指標（North Star Metric）
+    when: 跨團隊對齊、指標爭議大、需要向管理層說明優先序
+    structure:
+      - layer: 北極星
+        rule: 單一指標，同時代表客戶獲得的價值與公司獲得的價值；不可直接操作
+        example_shape: "每週完成 N 次核心價值行為的活躍帳號數"
+      - layer: 輸入指標（3〜5 個）
+        rule: 團隊可直接影響，加總邏輯上能推動北極星
+        example_shape: "新規啟動率 / 核心行為頻度 / 復訪率 / 擴散係數"
+      - layer: 護欄指標（guardrail）
+        rule: 防止為了衝北極星而傷害長期健康；被觸發即中止該施策
+        example_shape: "解約率 / 客訴件數 / 品質不良率 / 單位成本"
+    anti_pattern: 選了無法被團隊影響的財務指標當北極星；沒有護欄導致指標操弄
+    source: Amplitude《North Star Playbook》
+
+  aarrr:
+    name: AARRR（海賊指標）
+    when: 商業模式為自助獲客、需要定位漏斗瓶頸
+    structure:
+      - layer: Acquisition 獲客
+        example_shape: 渠道別新規訪問數 / 註冊轉換率 / CAC
+      - layer: Activation 啟動
+        example_shape: 初回価値到達率（aha moment 到達率）/ 到達所要時間
+      - layer: Retention 留存
+        example_shape: N 日留存 / 週次 cohort 留存曲線 / 復帰率
+      - layer: Revenue 營收
+        example_shape: 課金轉換率 / ARPU / LTV
+      - layer: Referral 推薦
+        example_shape: 招待送信率 / 招待受諾率 / K 係數
+    anti_pattern: 只看漏斗最上緣（獲客）而忽略留存，導致漏水桶式成長
+    source: Dave McClure "Startup Metrics for Pirates"
+
+  heart:
+    name: HEART（Google 使用者體驗指標）
+    when: 需要把「體驗好壞」量化，補足純商業指標的盲點
+    structure:
+      - layer: Happiness 滿意度
+        example_shape: CSAT / NPS / アプリ評価
+      - layer: Engagement 參與度
+        example_shape: 訪問頻度 / セッション長 / 機能利用深度
+      - layer: Adoption 採用
+        example_shape: 新機能の利用開始率
+      - layer: Retention 留存
+        example_shape: 継続利用率
+      - layer: Task success 任務成功
+        example_shape: 完了率 / 所要時間 / エラー率
+    anti_pattern: 五個維度全都測 → 沒有優先序；應每次只挑 1〜2 個對準當前問題
+    source: Kerry Rodden et al., Google（CHI 2010 論文）
+
+  saas_unit_economics:
+    name: B2B SaaS 單位經濟
+    when: 商業模式為訂閱制、需要向經營層說明成長的可持續性
+    structure:
+      - layer: 獲客效率
+        example_shape: CAC / CAC payback 期間（月）/ Magic Number
+      - layer: 收益留存
+        example_shape: NRR（淨收入留存）/ GRR（總收入留存）/ 解約率
+      - layer: 價值密度
+        example_shape: ARPA / LTV / LTV-CAC 比
+      - layer: 成長品質
+        example_shape: 有機獲客比率 / 銷售效率 / 毛利率
+    benchmark_note: >-
+      業界常被引用的參考值：NRR 100% 以上為健康、120% 以上為優秀；
+      CAC payback 12 個月內為健康。這些是歐美 SaaS 的經驗值，
+      日本市場與早期階段的實際分布可能不同，引用時應標注為「業界經驗值」而非目標值。
+    anti_pattern: 用 LTV 除以 CAC 的比值自我安慰，卻沒看回收期與現金流
+    source: SaaS 業界通用指標定義（Bessemer / OpenView 等公開報告之共通項）
+
+  plg_funnel:
+    name: PLG（產品主導成長）漏斗
+    when: 有免費層或試用、產品本身承擔獲客與轉換
+    structure:
+      - layer: 產品合格線索（PQL）
+        example_shape: 達到特定使用深度的免費帳號數
+      - layer: 自助轉換
+        example_shape: 免費→有料轉換率 / 転換までの日数
+      - layer: 組織內擴散
+        example_shape: 同一ドメイン内のシート増加率 / チーム招待率
+      - layer: 銷售承接
+        example_shape: PQL→商談化率（銷售輔助的 PLG）
+    anti_pattern: 把所有免費使用者當線索丟給銷售，銷售產能被稀釋
+    source: OpenView《Product Led Growth》相關公開報告
+
+  ai_product_metrics:
+    name: 生成式 AI 產品指標
+    when: 產品輸出由模型生成、品質無單一正解
+    structure:
+      - layer: 採用與價值
+        example_shape: 建議採納率 / 採納後留存率 / 任務完成率 / 人手介入率
+      - layer: 品質
+        example_shape: 黃金測試集通過率 / 幻覺率（要有明確判定基準）/ 負面回饋率 / 再生成率
+      - layer: 效率與成本
+        example_shape: 單一成功任務成本 / 平均 token 用量 / P95 應答時間 / 快取命中率
+      - layer: 信賴與治理
+        example_shape: 稽核日誌覆蓋率 / 出力審核通過率 / 資安事故件數
+    anti_pattern: >-
+      只看離線 benchmark 分數，線上體感退化無人察覺；
+      只看採納率而不看採納後留存，導致降低門檻灌水。
+    source: 各 LLM 供應商官方評測文件與 AI 產品工程實踐之共通模式
+
+  experiment_design:
+    name: 實驗設計最小規格
+    when: 任何 A/B 測試或灰度發布
+    structure:
+      - layer: 假設
+        example_shape: "若做 X，則指標 Y 會提升 Z%，因為（機制）"
+      - layer: 對象與分流
+        example_shape: 對象母集団 / 分流單位（使用者/帳號/會話）/ 分流比例
+      - layer: 判定
+        example_shape: 主要指標 / 護欄指標 / 必要樣本數 / 最短執行期間 / 判定基準
+      - layer: 結果處理
+        example_shape: 採用・中止・再實驗的事前約定 / 學習點記錄
+    anti_pattern: >-
+      事後才選指標（p-hacking）；沒算樣本數就開跑；
+      看到有利數字就提早停止（peeking）。
+    source: Ron Kohavi et al.《Trustworthy Online Controlled Experiments》(2020)
+
+  rice_prioritization:
+    name: RICE 優先序
+    when: 需要在資源有限下排序施策，且要能對外說明理由
+    structure:
+      - layer: Reach 觸及
+        example_shape: 一定期間內受影響的使用者數
+      - layer: Impact 影響
+        example_shape: 對目標指標的影響程度（3/2/1/0.5/0.25 五級）
+      - layer: Confidence 信心
+        example_shape: 100% / 80% / 50%（有資料 / 有推論 / 純直覺）
+      - layer: Effort 工數
+        example_shape: 人月
+    formula: "(Reach × Impact × Confidence) ÷ Effort"
+    anti_pattern: >-
+      Confidence 全填 100% 讓分數失去區分力；
+      用 RICE 取代判斷而非輔助判斷。
+    source: Intercom 公開之優先序框架

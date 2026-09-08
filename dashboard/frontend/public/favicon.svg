@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <title>JobPilot</title>
+  <defs>
+    <linearGradient id="g" x1="19" y1="16" x2="45" y2="53" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F9DB70"/>
+      <stop offset="1" stop-color="#F2B84D"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="28" fill="#FFF8ED" stroke="#5A5248" stroke-width="2.4"/>
+  <path d="m19.2 27.5-1.7-12 10 5.8a19 19 0 0 1 9 0l10-5.8-1.7 12a15 15 0 0 1 4.2 10.7C49 47 41.4 53 32 53s-17-6-17-14.8a15 15 0 0 1 4.2-10.7Z" fill="url(#g)" stroke="#5A5248" stroke-width="2.3" stroke-linejoin="round"/>
+  <path d="M23 35.3c1.2 1.5 3.2 1.5 4.4 0m9.2 0c1.2 1.5 3.2 1.5 4.4 0" stroke="#5A5248" stroke-width="2" stroke-linecap="round"/>
+  <path d="m29.7 40.3 2.3-1.2 2.3 1.2-2.3 2-2.3-2Z" fill="#5A5248"/>
+  <path d="m32 23.4 1.2 2.8 2.8 1.2-2.8 1.2-1.2 2.8-1.2-2.8-2.8-1.2 2.8-1.2 1.2-2.8Z" fill="#FFF8ED" stroke="#5A5248" stroke-width=".8"/>
+  <path d="m53 7 1.2 3.3 3.3 1.2-3.3 1.2L53 16l-1.2-3.3-3.3-1.2 3.3-1.2L53 7Z" fill="#F5C842" stroke="#5A5248" stroke-width="1.1"/>
+</svg>

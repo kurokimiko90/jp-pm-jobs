@@ -1,0 +1,17 @@
+services:
+  dashboard:
+    build: .
+    ports:
+      - "${DASHBOARD_PORT:-8000}:8000"
+    env_file:
+      - .env
+    environment:
+      - DASHBOARD_PORT=8000
+    volumes:
+      # 個人資料 / 設定 / 產出物與 host 共用，爬蟲在 host 跑的結果容器內即可讀到
+      - ./data:/app/data
+      - ./output:/app/output
+      - ./config:/app/config
+      - ./resume/jp/data.yaml:/app/resume/jp/data.yaml
+      - ./resume/jp/output:/app/resume/jp/output
+    restart: unless-stopped

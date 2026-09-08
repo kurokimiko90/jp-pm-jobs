@@ -1,0 +1,58 @@
+# 爬蟲設定（複製為 scraping.yaml 後編輯；不建也能跑，用程式碼預設值）
+# ─────────────────────────────────────────────────────────
+# CDP 模式說明：LinkedIn / BizReach 等需要登入的站點，用「連到你本機
+# 已登入的 Chrome」方式爬取（你自己的帳號、你自己的機器）。
+# 首次使用：跑 scrape 時會自動用下面的 user_data_dir 開一個獨立 Chrome，
+# 你在裡面手動登入一次，之後 cookie 就留在該 profile。
+
+# Chrome 執行檔路徑（macOS 預設如下；Linux 常見 /usr/bin/google-chrome）
+chrome_bin: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+
+cdp_profiles:
+  linkedin_cdp:
+    port: 9253                          # CDP 偵錯埠（互相不可重複，除非共用同一 Chrome）
+    user_data_dir: ~/.chrome-linkedin   # 獨立 Chrome profile 目錄（cookie 存這裡）
+    start_url: https://www.linkedin.com/jobs
+  bizreach_cdp:
+    port: 9270
+    user_data_dir: ~/.chrome-bizreach
+    start_url: https://www.bizreach.jp/
+  indeed_cdp:
+    port: 9280
+    user_data_dir: ~/.chrome-indeed
+    start_url: https://jp.indeed.com/
+  recruiter_agent_cdp:
+    port: 9270                          # 可與 bizreach 共用（同一個 Chrome）
+    user_data_dir: ~/.chrome-bizreach
+    start_url: https://mypage.r-agent.com/
+  ragent_search:
+    port: 9270                          # 同上（同一個 r-agent ログイン済み Chrome）
+    user_data_dir: ~/.chrome-bizreach
+    start_url: https://mypage.r-agent.com/
+
+# r-agent マイページ「求人検索」の保存条件から求人一覧＋JD を直接取得（可選）。
+# search_urls が空なら自動 skip。URL の作り方：マイページで検索条件を作って
+# 一覧が出た状態のアドレスバーをそのままコピーする（条件 = URL）。
+# 書き込み先 source はメール由来と同じ 'recruiter_agent'（同一 ID 空間で自動マージ）。
+ragent_search:
+  search_urls: []
+    # - name: プロダクトマネージャー
+    #   url: "https://mypage.r-agent.com/job_search/occ_lv3_xxxxx"
+  max_load_clicks: 2                    # 「さらに表示する」クリック回数（1 回 = +100 件）
+  min_salary_man: 0                     # 一覧段階の年収下限（万円）。0 = 絞らない
+  detail_limit: 60                      # 1 回の実行で開く詳細ページ数の上限
+
+# リクルートエージェント経由の推薦メールを Gmail から取り込む（可選）。
+# 需要先完成 Gmail OAuth（python3 -m inbox.auth）。未設定 sender_query 則自動跳過。
+recruiter_agent:
+  sender_query: ""                      # 例: "from:your-ca@r-agent.com"（担当 CA のアドレス）
+  footer_markers: []                    # 例: ["山田 太郎"]（CA 署名，用於裁掉郵件頁腳）
+  joboffer_referral: jobSearch          # /joboffers/{id} に付ける流入元タグ。裸 URL は
+                                        # 必ずエラーになる。r-agent 側が値を変えたらここで差し替え
+
+# JAC Recruitment「求人情報のご案内」メールを Gmail から取り込む（可選）。
+# 未設定でもドメイン全体（from:jac-recruitment.jp）で動くので、担当コンサルタントの
+# アドレスに絞りたい場合だけ書き換える。
+jac_recruitment:
+  sender_query: "from:jac-recruitment.jp"        # 例: "from:your-consultant@jac-recruitment.jp"
+  subject_query: 'subject:"求人情報のご案内"'    # 求人紹介メールの件名（テンプレ変更時のみ調整）
