@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>{{TITLE}}</title>
+<style>
+  :root {
+    --ink: #1a1d23; --sub: #5a6472; --accent: #2557a7; --bg: #f7f8fa;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Hiragino Sans", "Noto Sans JP", sans-serif; background: var(--bg); color: var(--ink); }
+  .slide {
+    width: 100vw; height: 100vh; padding: 8vh 10vw;
+    display: none; flex-direction: column; justify-content: center;
+  }
+  .slide.active { display: flex; }
+  .slide h2 {
+    font-size: 2.4rem; margin-bottom: 5vh; border-left: 8px solid var(--accent);
+    padding-left: 24px; letter-spacing: 0.02em;
+  }
+  .slide ul { list-style: none; }
+  .slide li {
+    font-size: 1.5rem; line-height: 1.7; margin-bottom: 2.5vh; padding-left: 1.4em;
+    position: relative; color: var(--ink);
+  }
+  .slide li::before { content: "▸"; position: absolute; left: 0; color: var(--accent); }
+  .title-slide { text-align: center; align-items: center; }
+  .title-slide h2 { border: none; padding: 0; font-size: 3rem; }
+  .title-slide li { font-size: 1.4rem; color: var(--sub); }
+  .title-slide li::before { content: ""; }
+  .note {
+    margin-top: auto; padding-top: 3vh; font-size: 0.95rem; color: var(--sub);
+    border-top: 1px dashed #ccd; display: none;
+  }
+  body.show-notes .note { display: block; }
+  #hud {
+    position: fixed; bottom: 16px; right: 24px; font-size: 0.85rem; color: var(--sub);
+  }
+  @media print {
+    .slide { display: flex !important; height: auto; min-height: 100vh; page-break-after: always; }
+    body.show-notes .note, .note { display: block; }
+    #hud { display: none; }
+  }
+</style>
+</head>
+<body>
+{{SLIDES}}
+<div id="hud"><span id="pos"></span>　←→: 移動　N: 原稿表示　{{DATE}}</div>
+<script>
+  const slides = document.querySelectorAll(".slide");
+  let i = 0;
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle("active", k === i));
+    document.getElementById("pos").textContent = (i + 1) + " / " + slides.length;
+  }
+  document.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight" || e.key === " ") show(i + 1);
+    if (e.key === "ArrowLeft") show(i - 1);
+    if (e.key.toLowerCase() === "n") document.body.classList.toggle("show-notes");
+  });
+  document.addEventListener("click", () => show(i + 1));
+  show(0);
+</script>
+</body>
+</html>

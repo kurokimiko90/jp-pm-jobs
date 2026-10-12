@@ -1,0 +1,41 @@
+# LLM provider 設定（複製為 llm.yaml 後編輯）
+# ─────────────────────────────────────────────
+# chain: 依序嘗試的 provider，首個成功者勝出。
+# 不建 llm.yaml 也能跑：系統自動偵測 .env 裡有哪家 API key 就用哪家，
+# 都沒有則嘗試本機已登入的 CLI（claude / codex / gemini）。
+#
+# 認證方式二選一：
+#   A. API key   → 在 .env 設 ANTHROPIC_API_KEY / OPENAI_API_KEY / GEMINI_API_KEY
+#   B. OAuth 訂閱 → 本機安裝並登入 claude / codex / gemini CLI，chain 用 "cli"
+#      （吃 Claude Pro / ChatGPT Plus 等訂閱額度，免 API key）
+
+chain:
+  - anthropic     # 有 ANTHROPIC_API_KEY 時優先
+  - cli           # 沒 key 時退回本機 CLI（OAuth 訂閱）
+
+providers:
+  anthropic:
+    api_key_env: ANTHROPIC_API_KEY
+    model: claude-sonnet-4-5        # gap 分析等預設模型
+    max_tokens: 8192
+
+  openai:
+    api_key_env: OPENAI_API_KEY
+    model: gpt-4o
+    # base_url 可改成任何 OpenAI 相容端點：
+    # base_url: https://openrouter.ai/api/v1
+    # base_url: http://localhost:11434/v1   # Ollama（require_key: false）
+    # require_key: false
+
+  gemini:
+    api_key_env: GEMINI_API_KEY
+    model: gemini-2.0-flash
+
+  cli:
+    # 依序嘗試的 CLI 二進位（名稱走 PATH，也可寫絕對路徑）
+    binaries: [claude, codex, gemini]
+
+  # 自建 brain-pool gateway 範例（一般用戶不需要）
+  # miko_gateway:
+  #   base_url: http://localhost:3005
+  #   engine: codex

@@ -1,0 +1,41 @@
+# 方法論庫 — 本人が実際に使っている思考の型
+#
+# 自動構築: python3 -m proposal.frameworks_build
+#   プロフィール + interview/question-bank/core/*.md + 直近 retro を素材に、
+#   3 つの brain へ並行で書かせ、機械採点（根拠原文が素材に実在するか）で
+#   ふるいにかけ、裁決モデルが統合し、最後にもう一度機械で検査する。
+#
+# このファイルは User Layer（DATA_CONTRACT.md）。手で直してよい。
+# 自動では上書きされない（--rebuild を明示したときだけ作り直す）。
+#
+# proposal/ の主提案・能力カードは、ここに載っている型だけを分析の骨格に使う
+# （PDCA/SWOT/MECE のような一般論は prompt で禁止している）。
+
+version: 1
+generated_at: '2026-01-01'
+built_by:
+  - codex
+  - antigravity
+  - gemini1
+judge: codex
+note: 自動生成だが User Layer。手で直してよい / 自動では上書きしない。
+
+frameworks:
+  - name: 目的から逆算して解決策を選ぶ
+    when: 依頼が具体的な機能名で来たとき / 要望が曖昧なとき
+    steps:
+      - 要望を解決策の一案として受け取り、その裏にある目的まで戻して確認する
+      - 利用者を役割ごとに分け、それぞれの詰まりどころを洗い出す
+      - 共通する課題に対し、より低コストで確実な代替手段がないか比べる
+    evidence:
+      # quote は素材からの原文コピー。機械照合に使うので書き換えない
+      project: （実際のプロジェクト名）
+      what_happened: （そこで実際に起きたこと・1 文）
+      quote: （面接回答やプロフィールからの原文 20 文字以上）
+    one_liner: 要望をそのまま仕様にせず、目的まで戻してから解決策を選びます。
+    votes: 3
+    anchor_score: 1.0
+    voters:
+      - codex
+      - antigravity
+      - gemini1

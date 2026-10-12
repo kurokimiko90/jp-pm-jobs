@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>職務経歴書 — {{ name_ja }}{% if company %}（{{ company }} 向け）{% endif %}</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap');
+
+:root {
+  --ink: #1a1a1a;
+  --ink-soft: #4a5568;
+  --ink-muted: #8896a8;
+  --accent: #1e3a5f;
+  --accent-soft: #4a6789;
+  --accent-dim: rgba(30,58,95,.06);
+  --border: #e2e8f0;
+  --border-soft: #f0f2f5;
+  --bg: #ffffff;
+  --bg-soft: #f8f9fb;
+  --mono: 'Inter', 'SF Mono', monospace;
+  --sans: 'Inter', 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { font-family: var(--sans); color: var(--ink); font-size: 13.8pt; line-height: 1.6; -webkit-font-smoothing: antialiased; font-feature-settings: 'palt'; }
+body { background: #e5e7eb; padding: 24px 0; }
+
+.page {
+  background: var(--bg);
+  width: 210mm;
+  min-height: 297mm;
+  padding: 14mm 16mm;
+  margin: 0 auto 20px;
+  box-shadow: 0 2px 20px rgba(0,0,0,.08);
+  position: relative;
+}
+
+@media print {
+  body { background: white; padding: 0; }
+  .page { box-shadow: none; margin: 0; break-after: page; }
+}
+@page { size: A4; margin: 0; }
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 12px;
+  border-bottom: 2.5px solid var(--accent);
+  margin-bottom: 16px;
+}
+.header-left h1 {
+  font-size: 28.8pt;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  color: var(--ink);
+}
+.header-left .kana {
+  font-size: 9.6pt;
+  color: var(--ink-muted);
+  letter-spacing: .15em;
+  margin-bottom: 2px;
+}
+.header-left .title-line {
+  font-size: 12pt;
+  color: var(--accent);
+  font-weight: 600;
+  margin-top: 4px;
+}
+.header-right {
+  text-align: right;
+  font-size: 9.6pt;
+  color: var(--ink-soft);
+  line-height: 1.7;
+  padding-top: 6px;
+  white-space: nowrap;
+}
+.header-right .doc-title {
+  font-size: 13.2pt;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.section { margin-bottom: 14px; }
+.section-title {
+  font-size: 10.8pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--accent);
+  padding-bottom: 4px;
+  border-bottom: 1.5px solid var(--accent);
+  margin-bottom: 10px;
+}
+
+.summary {
+  font-size: 11.4pt;
+  line-height: 1.7;
+  color: var(--ink-soft);
+  padding: 10px 14px;
+  background: var(--accent-dim);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 4px 4px 0;
+}
+.summary strong { color: var(--ink); font-weight: 600; }
+
+.comp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.comp-col h4 {
+  font-size: 9.6pt;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.comp-col .chips { display: flex; flex-wrap: wrap; gap: 3px; }
+.chip {
+  display: inline-block;
+  padding: 1.5px 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 9pt;
+  color: var(--ink-soft);
+  background: var(--bg);
+  white-space: nowrap;
+}
+
+.exp {
+  display: grid;
+  grid-template-columns: 32mm 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+  align-items: start;
+}
+.exp-meta {
+  font-size: 9.6pt;
+  color: var(--ink-muted);
+  line-height: 1.5;
+  padding-right: 10px;
+  border-right: 1px solid var(--border);
+}
+.exp-meta .period {
+  font-weight: 700;
+  font-size: 10.2pt;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+.exp-meta .info { margin-top: 1px; }
+.exp-body h3 {
+  font-size: 12.6pt;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 1px;
+}
+.exp-body .role {
+  font-size: 10.2pt;
+  color: var(--accent-soft);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.exp-body .desc {
+  font-size: 10.8pt;
+  color: var(--ink-soft);
+  margin-bottom: 5px;
+  line-height: 1.55;
+}
+
+ul.bl { list-style: none; padding: 0; margin: 0; }
+ul.bl li {
+  position: relative;
+  padding-left: 12px;
+  margin-bottom: 3px;
+  font-size: 10.8pt;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+ul.bl li::before {
+  content: '';
+  position: absolute;
+  left: 1px;
+  top: .65em;
+  width: 4px;
+  height: 4px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+ul.bl li strong { color: var(--ink); font-weight: 600; }
+
+.metrics {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.metric {
+  background: var(--bg-soft);
+  border-left: 2.5px solid var(--accent);
+  padding: 5px 10px;
+  border-radius: 0 4px 4px 0;
+  flex: 1;
+  min-width: 120px;
+}
+.metric .val {
+  font-family: var(--mono);
+  font-size: 15.6pt;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.1;
+}
+.metric .lbl {
+  font-size: 9pt;
+  color: var(--ink-muted);
+  margin-top: 2px;
+}
+
+.pr-block {
+  background: linear-gradient(180deg, var(--bg-soft) 0%, var(--bg) 100%);
+  border-left: 3px solid var(--accent);
+  padding: 10px 14px;
+  border-radius: 0 5px 5px 0;
+}
+.pr-item { margin-bottom: 8px; }
+.pr-item:last-child { margin-bottom: 0; }
+.pr-item .pr-title {
+  font-size: 11.4pt;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+.pr-item .pr-body {
+  font-size: 10.2pt;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+.page-footer {
+  position: absolute;
+  bottom: 8mm;
+  left: 16mm;
+  right: 16mm;
+  border-top: 1px solid var(--border-soft);
+  padding-top: 4px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 8.4pt;
+  color: var(--ink-muted);
+}
+
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10.2pt;
+}
+.info-table td {
+  padding: 3px 8px;
+  border-bottom: 1px solid var(--border-soft);
+  vertical-align: top;
+}
+.info-table td:first-child {
+  width: 28mm;
+  color: var(--ink-muted);
+  font-weight: 600;
+}
+.info-table .lang-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.info-table .lang-row span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+</style>
+</head>
+<body>
+{% macro render_exp(e) %}
+  <div class="exp">
+    <div class="exp-meta">
+      <div class="period">{{ e.period }}</div>
+      {% for t in e.tags %}<div class="info">{{ t }}</div>{% endfor %}
+    </div>
+    <div class="exp-body">
+      <h3>{{ e.company }}</h3>
+      {% if e.role %}<div class="role">{{ e.role }}</div>{% endif %}
+      <ul class="bl">
+        {% for b in e.bullets %}<li>{{ b | md_bold }}</li>{% endfor %}
+      </ul>
+      {% if e.metrics %}
+      <div class="metrics">
+        {% for m in e.metrics %}
+        <div class="metric"><div class="val">{{ m.val }}</div><div class="lbl">{{ m.lbl }}</div></div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+{% endmacro %}
+
+<!-- ======================== PAGE 1 ======================== -->
+<div class="page">
+
+  <div class="header">
+    <div class="header-left">
+      <div class="kana">{{ kana }}</div>
+      <h1>{{ name_ja }}</h1>
+      <div class="title-line">{{ headline_title }}</div>
+    </div>
+    <div class="header-right">
+      <div class="doc-title">職務経歴書</div>
+      {{ today }}<br>
+      {{ visa }}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">職務要約</div>
+    <div class="summary">{{ summary | md_bold }}</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">コアコンピテンシー</div>
+    <div class="comp-grid">
+      {% for c in competencies %}
+      <div class="comp-col">
+        <h4>{{ c.title }}</h4>
+        <div class="chips">
+          {% for chip in c.chips %}<span class="chip">{{ chip }}</span>{% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">職務経歴</div>
+    {% for e in experiences[:page1_exp_count] %}{{ render_exp(e) }}{% endfor %}
+  </div>
+
+  <div class="page-footer">
+    <span>{{ name_ja }} — 職務経歴書{% if company %}（{{ company }} 向け）{% endif %}</span>
+    <span>1 / {{ total_pages }}</span>
+  </div>
+</div>
+
+<!-- ======================== PAGE 2 ======================== -->
+<div class="page">
+
+  {% if experiences[page1_exp_count:] %}
+  <div class="section">
+    <div class="section-title">職務経歴（続き）</div>
+    {% for e in experiences[page1_exp_count:] %}{{ render_exp(e) }}{% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="section">
+    <div class="section-title">自己 PR</div>
+    <div class="pr-block">
+      {% for p in self_pr %}
+      <div class="pr-item">
+        <div class="pr-title">{{ p.title }}</div>
+        <div class="pr-body">{{ p.body | md_bold }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">学歴・資格</div>
+    <table class="info-table">
+      {% for row in education %}
+      <tr><td>{{ row.date }}</td><td>{{ row.entry }}</td></tr>
+      {% endfor %}
+      <tr>
+        <td>言語</td>
+        <td><div class="lang-row">{% for l in languages %}<span>{{ l }}</span>{% endfor %}</div></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="page-footer">
+    <span>{{ name_ja }} — 職務経歴書{% if company %}（{{ company }} 向け）{% endif %}</span>
+    <span>2 / {{ total_pages }}</span>
+  </div>
+</div>
+
+</body>
+</html>

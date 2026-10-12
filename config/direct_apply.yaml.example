@@ -1,0 +1,22 @@
+# 官網直投設定（缺檔 = 用程式碼預設值，行為相同）
+# cp config/direct_apply.yaml.example config/direct_apply.yaml 後修改
+
+# 常駐掃描總開關（scripts/direct_apply_scan.sh 每 30 分鐘一輪）
+enabled: true
+
+# 進入自動直投流程的基礎評分門檻（jobs.score，規則評分產出；嚴格大於）
+min_score: 55
+
+# 進入自動直投流程的推薦分門檻（jobs.recommend_score，gap 分析產出；嚴格大於）
+min_recommend: 80
+
+# 每輪最多處理職缺數（每筆約 3 次 miko-ws LLM 呼叫）
+batch_limit: 5
+
+# pack_ready 後自動建 Gmail 草稿（永不 send，寄出靠人在 Gmail 手動按）。
+# false = 舊行為：全部等人工確認 email 後才建草稿
+auto_draft: true
+
+# 自動建草稿的 email 信心門檻（tools/company_contact.score_email 產出，0-1）。
+# 低於門檻停在 pack_ready 等人工確認；免費信箱 0.45、一般企業域 0.6、recruit@/saiyo@ 更高
+auto_draft_min_conf: 0.6

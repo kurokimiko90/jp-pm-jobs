@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>履歴書 — {{ profile.family_name }}{{ profile.given_name }}</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  /* 履歴書専用：1 頁・整体設計（不影響職務経歴書） */
+  .rireki-doc { padding: 8mm 15mm; }
+
+  /* ── Header ── */
+  .rireki-doc .rireki-head {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    border-bottom: 1.5px solid var(--color-accent);
+    padding-bottom: var(--space-2); margin-bottom: var(--space-3);
+  }
+  .rireki-doc .rireki-head .eyebrow {
+    font-size: 11pt; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--color-accent); font-weight: 700; margin-bottom: 4pt;
+  }
+  .rireki-doc .rireki-head .eyebrow .en { color: var(--color-text-muted); font-weight: 400; margin-left: 6pt; font-size: 10pt; }
+  .rireki-doc .rireki-head h1 { font-size: 19pt; letter-spacing: 0.03em; line-height: 1; }
+  .rireki-doc .rireki-head .furigana {
+    font-size: 8.5pt; color: var(--color-text-muted);
+    margin-top: 3pt; letter-spacing: 0.1em;
+  }
+  .rireki-doc .rireki-head .head-date {
+    font-size: 8pt; color: var(--color-text-muted); text-align: right; line-height: 1.6;
+  }
+
+  /* ── 個人情報 ── */
+  .rireki-doc .rireki-info { margin: 0 0 var(--space-3); }
+  .rireki-doc .rireki-info .row {
+    display: grid; grid-template-columns: 80pt 1fr; gap: var(--space-3);
+    align-items: baseline; padding: 2.5pt 0;
+    border-bottom: 1px solid var(--color-border-soft);
+  }
+  .rireki-doc .rireki-info .row:first-child { border-top: 1px solid var(--color-border-soft); }
+  .rireki-doc .rireki-info .k {
+    font-size: 8pt; text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-muted);
+  }
+  .rireki-doc .rireki-info .v { font-size: 10pt; color: var(--color-text); }
+  .rireki-doc .rireki-info .v .kana { color: var(--color-text-muted); font-size: 8.5pt; }
+  .rireki-doc .nowrap { white-space: nowrap; }
+
+  /* ── Section 節奏 ── */
+  .rireki-doc .section { margin-bottom: var(--space-3); }
+  .rireki-doc .section + .section { margin-top: var(--space-3); }
+  .rireki-doc h2 { font-size: 10pt; margin-bottom: 4pt; padding-bottom: 3pt; }
+
+  /* ── 表格：三表統一對齊 ── */
+  .rireki-doc .rireki-table { font-size: 9pt; table-layout: fixed; width: 100%; }
+  .rireki-doc .rireki-table th,
+  .rireki-doc .rireki-table td { padding: 3pt var(--space-3); line-height: 1.4; }
+  .rireki-doc .rireki-table .col-year { width: 6.5mm; padding-left: 1pt; padding-right: 1pt; }
+  .rireki-doc .rireki-table .col-month { width: 5.8mm; padding-left: 1pt; padding-right: 1pt; }
+  .rireki-doc .rireki-table .col-org { width: 52mm; border-right: none; padding-right: 1pt; white-space: nowrap; }
+  .rireki-doc .rireki-table .col-action { border-left: none; padding-left: 1pt; }
+
+  /* ── metrics / 希望 ── */
+  .rireki-doc .metric { padding: 4pt var(--space-3); }
+  .rireki-doc .metric .value { font-size: 11pt; }
+  .rireki-doc .metric .label { margin-top: 1pt; }
+  .rireki-doc section p { padding: 5px var(--space-3) !important; line-height: 1.85; }
+</style>
+</head>
+<body>
+
+<section class="page rireki-doc">
+
+  <header class="rireki-head">
+    <div class="head-main">
+      <div class="eyebrow">履歴書<span class="en">Resume</span></div>
+      <h1>{{ profile.family_name }} {{ profile.given_name }}</h1>
+      <div class="furigana">{{ profile.family_kana }} {{ profile.given_kana }}</div>
+    </div>
+    <div class="head-date">作成日<br>{{ today }}</div>
+  </header>
+
+  <dl class="rireki-info">
+    <div class="row">
+      <span class="k">生年月日</span>
+      <span class="v">{{ profile.birth_date }}（満 {{ profile.age }} 歳{% if profile.gender %}・{{ profile.gender }}{% endif %}）</span>
+    </div>
+    <div class="row">
+      <span class="k">国籍 / 在留資格</span>
+      <span class="v">{{ profile.nationality }}</span>
+    </div>
+    <div class="row">
+      <span class="k">現住所</span>
+      <span class="v"><span class="nowrap">〒{{ contact.postal_code }}</span> {{ contact.address }}　<span class="kana">{{ contact.address_kana }}</span></span>
+    </div>
+    <div class="row">
+      <span class="k">連絡先</span>
+      <span class="v"><span class="nowrap">{{ contact.phone }}</span> ／ <span class="nowrap">{{ contact.email }}</span></span>
+    </div>
+    <div class="row">
+      <span class="k">扶養家族・配偶者</span>
+      <span class="v">扶養家族 {{ profile.dependents }} 人{% if profile.marital %}　／　配偶者 {{ profile.marital }}{% endif %}{% if rirekisho.commute_minutes %}　／　通勤 {{ rirekisho.commute_minutes }} 分{% endif %}</span>
+    </div>
+  </dl>
+
+  <section class="section">
+    <h2>学歴</h2>
+    <table class="rireki-table">
+      <thead><tr><th class="col-year">年</th><th class="col-month">月</th><th colspan="2">学歴</th></tr></thead>
+      <tbody>
+        {% for e in rirekisho.education %}
+        <tr><td class="col-year">{{ e.year }}</td><td class="col-month">{{ e.month }}</td><td class="col-org">{{ e.org }}</td><td class="col-action">{{ e.action }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>職歴</h2>
+    <table class="rireki-table">
+      <thead><tr><th class="col-year">年</th><th class="col-month">月</th><th colspan="2">職歴</th></tr></thead>
+      <tbody>
+        {% for e in rirekisho.career_summary %}
+        <tr><td class="col-year">{{ e.year }}</td><td class="col-month">{{ e.month }}</td><td class="col-org">{{ e.org }}</td><td class="col-action">{{ e.action }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>免許・資格</h2>
+    <table class="rireki-table">
+      <thead><tr><th class="col-year">年</th><th class="col-month">月</th><th>免許・資格</th></tr></thead>
+      <tbody>
+        {% for q in rirekisho.qualifications %}
+        <tr><td class="col-year">{{ q.year }}</td><td class="col-month">{{ q.month }}</td><td>{{ q.title }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>本人希望記入欄</h2>
+    <p style="background:var(--color-bg-soft); padding:var(--space-3) var(--space-3); border-left:3px solid var(--color-accent); border-radius:0 4px 4px 0;">
+      職種：{{ position.title }}<br>
+      勤務地：日本国内／{{ rirekisho.hopes }}
+    </p>
+  </section>
+
+
+</section>
+
+</body>
+</html>

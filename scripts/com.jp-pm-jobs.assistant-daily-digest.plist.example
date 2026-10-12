@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  AI 職涯助手每日總結：每日 22:00 推播今天問了什麼 + 待處理發現。
+  安裝（把 /path/to/jp-pm-jobs 改成自己的）:
+    cp scripts/com.jp-pm-jobs.assistant-daily-digest.plist.example \
+       ~/Library/LaunchAgents/com.jp-pm-jobs.assistant-daily-digest.plist
+    （編輯路徑後）
+    launchctl load ~/Library/LaunchAgents/com.jp-pm-jobs.assistant-daily-digest.plist
+  停用:
+    launchctl unload ~/Library/LaunchAgents/com.jp-pm-jobs.assistant-daily-digest.plist
+  立即測一次:
+    launchctl start com.jp-pm-jobs.assistant-daily-digest
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.jp-pm-jobs.assistant-daily-digest</string>
+
+    <!-- 經 launchd_shim.py（python3 進入點）：TCC 不給背景 bash 讀 ~/Documents -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/opt/homebrew/bin/python3</string>
+        <string>/path/to/jp-pm-jobs/scripts/launchd_shim.py</string>
+        <string>/path/to/jp-pm-jobs/scripts/assistant_daily_digest.sh</string>
+    </array>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>22</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/path/to/jp-pm-jobs/output/logs/assistant-daily-digest.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/path/to/jp-pm-jobs/output/logs/assistant-daily-digest.err.log</string>
+
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>

@@ -1,0 +1,25 @@
+# 技術足跡 — 複製為 tech_footprint.yaml 後填寫
+# ─────────────────────────────────────────────────────────
+# 評分器的 tech_overlap 維度：JD 全文與下列技術實體名做子字串比對，
+# 命中 5 項以上拿滿分。名稱一律小寫。
+# by_category.<分類>.top_5 的「key」是技術名（value 隨意，程式只讀 key）。
+
+by_category:
+  languages:
+    top_5:
+      python: 1
+      typescript: 1
+      sql: 1
+  frameworks:
+    top_5:
+      react: 1
+      fastapi: 1
+  ai_tools:
+    top_5:
+      claude: 1
+      openai api: 1
+      rag: 1
+  infra:
+    top_5:
+      docker: 1
+      postgresql: 1

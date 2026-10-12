@@ -1,0 +1,375 @@
+# 產品增長案例庫 — Gate B 事實錨定的白名單來源
+#
+# 規則：
+#   - 這裡的案例是 LLM 唯一可以「指名道姓 + 引用數字」的清單。
+#   - 不在此庫中的公司案例，LLM 必須標 {{要出典確認}}（gates.py Gate B 會檢查）。
+#   - confidence: high = 一手來源（創辦人簡報 / IR / 官方技術部落格）可查證
+#                 medium = 二手報導或書籍轉述，方向可信、數字可能有版本差異
+#   - 新增案例時務必填 source，寧可少一筆也不要寫沒把握的數字。
+#
+# 欄位：
+#   business_model: b2c | b2b_saas | plg | marketplace | fintech | ai_product | enterprise
+#   growth_stage:   pre_pmf | pmf_to_scale | scale | mature
+#   lever:          acquisition | activation | retention | revenue | referral | expansion | efficiency
+
+cases:
+  # ============================================================
+  #  獲客 / 病毒係數
+  # ============================================================
+  - id: dropbox_double_sided_referral
+    name: Dropbox 雙邊推薦計畫
+    company: Dropbox
+    era: 2008-2010
+    business_model: [b2c, plg]
+    growth_stage: [pmf_to_scale]
+    lever: [acquisition, referral]
+    situation: >-
+      付費搜尋獲客成本遠高於產品單價（Drew Houston 公開簡報稱 CPA 233〜388 美元
+      vs 產品定價 99 美元），付費渠道在單位經濟上不成立。
+    action: >-
+      改以「獎勵即產品」的雙邊推薦：推薦人與被推薦人各得 500MB 免費空間，
+      並把邀請動線嵌進註冊後的首次使用流程（而非藏在設定頁）。
+    result: >-
+      註冊數 15 個月內從 10 萬成長到 400 萬（約 39 倍）；高峰期約 35% 的每日註冊來自推薦。
+    why_it_works: >-
+      獎勵的邊際成本接近零且就是產品本身，使用越多越需要空間 → 獎勵與價值感知同向；
+      雙邊獎勵讓分享者不必只靠利他動機。
+    transferable_when: [產品有邊際成本近零的可增量資源, 使用量與價值感知正相關, 個人即決策者]
+    caveats: >-
+      B2B 高單價 / 合規產品難直接複製（採購決策非個人）；獎勵成本必須明顯低於既有 CAC，
+      否則只是換個名目燒錢。
+    source: 'Drew Houston "Dropbox: Startup Lessons Learned"（2010, Slideshare）; Sean Ellis《Hacking Growth》'
+    confidence: high
+
+  - id: slack_team_activation_2000_messages
+    name: Slack 的 2000 則訊息啟動門檻
+    company: Slack
+    era: 2014-2015
+    business_model: [b2b_saas, plg]
+    growth_stage: [pmf_to_scale]
+    lever: [activation, retention]
+    situation: 免費團隊大量註冊但留存分歧極大，難以判斷哪些團隊會留下來。
+    action: >-
+      以資料回歸找出「團隊累計發出約 2000 則訊息」為留存分水嶺，
+      將此設為啟動指標（activation metric），並把 onboarding、客戶成功資源
+      全部對準「把新團隊推過 2000 則」而非單純衝註冊數。
+    result: >-
+      Slack 公開表示跨過該門檻的團隊約 93% 會持續使用；此指標成為全公司北極星的輸入指標。
+    why_it_works: >-
+      2000 則訊息代表「團隊已把真實工作流搬進來」，是習慣形成的代理變數，
+      而非虛榮指標；單一數字讓跨職能團隊有共同目標。
+    transferable_when: [多人協作型產品, 有明確使用行為可累計, 留存是主要瓶頸]
+    caveats: >-
+      2000 這個數字本身不可移植，可移植的是方法：用 cohort 回歸找出自己的門檻值。
+      單一使用者產品需改用其他行為代理。
+    source: Slack 官方部落格與 Ben Horowitz/a16z 相關訪談; Reforge 啟動指標教材普遍引用
+    confidence: medium
+
+  - id: hubspot_inbound_content_engine
+    name: HubSpot 的 Inbound 內容引擎
+    company: HubSpot
+    era: 2007-2015
+    business_model: [b2b_saas]
+    growth_stage: [pmf_to_scale, scale]
+    lever: [acquisition]
+    situation: 中小企業客單價撐不起外撥銷售（outbound）的獲客成本結構。
+    action: >-
+      以「教育內容 + 免費工具（Website Grader 等）」作為漏斗上緣，
+      用內容換取聯絡資訊 → MQL → 銷售跟進；內容主題直接對應客戶的問題關鍵字。
+    result: 建立起可預測的 inbound 管道，成為 B2B SaaS 內容獲客的範式，公司於 2014 年上市。
+    why_it_works: >-
+      買家在搜尋階段就被教育，銷售接手時信任成本已被前置消化；
+      免費工具產生的是「診斷結果」，天然帶出產品需求。
+    transferable_when: [買家會主動搜尋解決方案, 客單價中低需壓低 CAC, 有領域知識可輸出]
+    caveats: >-
+      內容引擎的回報週期以季/年計，不適合需要本季見效的場景；
+      AI 搜尋（AEO/GEO）改變了分發環境，2007 年的 SEO 打法需重新校準。
+    source: HubSpot 官方 inbound 方法論文件; Brian Halligan & Dharmesh Shah《Inbound Marketing》
+    confidence: high
+
+  # ============================================================
+  #  啟動 / 留存
+  # ============================================================
+  - id: facebook_7friends_10days
+    name: Facebook「10 天內加 7 個好友」
+    company: Facebook
+    era: 2008-2010
+    business_model: [b2c]
+    growth_stage: [scale]
+    lever: [activation, retention]
+    situation: 註冊使用者大量流失，成長團隊需要一個能對齊全公司的早期領先指標。
+    action: >-
+      用留存資料回歸找出「新使用者在 10 天內連結 7 位好友」與長期留存的強相關，
+      並把整個 onboarding（找朋友、匯入通訊錄、推薦）對準這個數字。
+    result: 成為成長團隊公開講述的經典啟動指標，驅動了大量 onboarding 改版。
+    why_it_works: >-
+      社交產品的價值來自網路密度，好友數是價值感知的直接前置條件；
+      把模糊的「讓使用者感受價值」翻譯成一個可被工程與設計執行的數字。
+    transferable_when: [產品價值依賴網路效應或內容供給密度, 有明確的早期行為可測]
+    caveats: >-
+      這是相關性而非因果，直接「衝指標」可能製造無效連結；
+      需搭配實驗驗證推動該行為是否真的提升留存。
+    source: Chamath Palihapitiya 公開演講與訪談（Facebook 成長團隊）; 業界廣泛引用
+    confidence: medium
+
+  - id: superhuman_pmf_engine
+    name: Superhuman 的 PMF 量化引擎
+    company: Superhuman
+    era: 2017-2019
+    business_model: [b2b_saas]
+    growth_stage: [pre_pmf, pmf_to_scale]
+    lever: [retention, activation]
+    situation: 創辦人 Rahul Vohra 認為 PMF 只能靠感覺判斷，無法作為工程化的改進目標。
+    action: >-
+      對使用者問「如果明天再也不能用這個產品，你會多失望？」，
+      以「非常失望」比例 40% 為 PMF 門檻；把回答「非常失望」的人分群做特徵分析，
+      產品路線圖一半資源用於強化該群體最愛的點、一半用於解決「有點失望」群體的主要阻礙。
+    result: >-
+      「非常失望」比例從 22% 提升到 58%（Vohra 於 First Round Review 撰文公開）。
+    why_it_works: >-
+      把 PMF 從二元判斷變成連續指標，讓路線圖有了可辯論的依據；
+      分群避免了「為所有人優化 = 為沒有人優化」。
+    transferable_when: [已有數百位真實使用者可問卷, 產品定位仍在收斂, 需要決定為誰優化]
+    caveats: >-
+      樣本需 100+ 且必須是真實使用過的人；40% 門檻源自 Sean Ellis 的經驗值非定律；
+      B2B 需區分使用者與採購決策者的答案。
+    source: Rahul Vohra "How Superhuman Built an Engine to Find Product Market Fit"（First Round Review, 2018）
+    confidence: high
+
+  - id: amplitude_north_star_workbook
+    name: Amplitude 北極星指標框架
+    company: Amplitude
+    era: 2018-
+    business_model: [b2b_saas]
+    growth_stage: [pmf_to_scale, scale]
+    lever: [retention, revenue]
+    situation: 產品團隊各自追不同指標，導致局部最佳化與跨部門衝突。
+    action: >-
+      定義單一北極星指標（必須同時代表客戶價值與商業價值），
+      拆出 3〜5 個可被團隊直接影響的輸入指標，形成指標樹；
+      每個團隊認領一個輸入指標。
+    result: 成為 B2B SaaS 指標治理的通用範式（North Star Playbook 公開發行）。
+    why_it_works: >-
+      北極星不可直接操作、輸入指標可直接操作，兩層結構同時解決「對齊」與「可執行」。
+    transferable_when: [跨團隊協作, 指標爭議大, 需要向管理層說明優先序]
+    caveats: 北極星選錯會系統性放大錯誤方向；需搭配護欄指標（guardrail）防止指標操弄。
+    source: Amplitude《North Star Playbook》（官方公開下載）
+    confidence: high
+
+  # ============================================================
+  #  營收 / 擴張（B2B SaaS）
+  # ============================================================
+  - id: snowflake_consumption_ndr
+    name: Snowflake 用量計價與淨收入留存
+    company: Snowflake
+    era: 2018-2021
+    business_model: [b2b_saas, enterprise]
+    growth_stage: [scale]
+    lever: [revenue, expansion]
+    situation: 傳統席次訂閱與客戶實際獲得的價值脫鉤，擴張受限於採購週期。
+    action: >-
+      採用消費量計價（consumption-based），客戶用得越多付越多；
+      客戶成功團隊的 KPI 綁在「用量成長」而非續約率。
+    result: >-
+      IPO 前後公開之淨收入留存率（NRR）長期高於 160%（S-1 與財報揭露），
+      為當時 SaaS 業界最高水準之一。
+    why_it_works: >-
+      收入與客戶價值實現同步，擴張不需要重新走採購流程；
+      但要求產品必須讓「用量成長」等於「客戶成功」。
+    transferable_when: [價值可被用量代理, 使用量會自然成長, 有能力做精細計量]
+    caveats: >-
+      營收可預測性下降（客戶可隨時減量），景氣下行時營收波動大；
+      需要極強的用量可觀測性與成本控管，否則毛利被侵蝕。
+    source: Snowflake S-1 與季度財報（公開 IR）
+    confidence: high
+
+  - id: zoom_ndr_bottom_up_enterprise
+    name: Zoom 由下而上滲透進企業
+    company: Zoom
+    era: 2016-2020
+    business_model: [b2b_saas, plg]
+    growth_stage: [pmf_to_scale, scale]
+    lever: [acquisition, expansion]
+    situation: 企業視訊市場由既有大廠把持，直接正面競爭銷售成本極高。
+    action: >-
+      免費方案讓個別員工與外部與會者無摩擦加入（會議連結即產品體驗），
+      使用擴散後再由銷售承接為企業合約。
+    result: IPO 時揭露之淨收入留存率長期高於 130%（S-1 揭露），且上市時已獲利。
+    why_it_works: >-
+      每一次會議都是一次產品試用，外部與會者成為下一個獲客觸點，
+      獲客成本由產品體驗吸收。
+    transferable_when: [產品使用天然跨組織邊界, 單人即可產生價值, 可安全提供免費層]
+    caveats: 資安/合規嚴格的產業（金融、醫療）由下而上路徑常被 IT 政策阻斷。
+    source: Zoom S-1 與財報（公開 IR）
+    confidence: high
+
+  # ============================================================
+  #  AI 產品特有
+  # ============================================================
+  - id: github_copilot_acceptance_rate
+    name: GitHub Copilot 以採納率作為核心產品指標
+    company: GitHub
+    era: 2021-2023
+    business_model: [ai_product, b2b_saas]
+    growth_stage: [pmf_to_scale]
+    lever: [activation, retention]
+    situation: >-
+      生成式產品的品質無法用傳統準確率衡量，且離線評測與真實使用體感落差大。
+    action: >-
+      以「建議採納率（acceptance rate）」與「採納後留存於程式碼中的比例」
+      作為線上核心指標，並公開研究開發者完成任務的速度差異。
+    result: >-
+      GitHub 公開的對照實驗顯示，使用 Copilot 的組完成指定任務的速度顯著快於對照組
+      （官方部落格報告約 55% 更快，任務為撰寫 HTTP server）。
+    why_it_works: >-
+      採納率是「使用者用行為投票」的線上指標，比離線 benchmark 更貼近價值；
+      採納後留存率進一步過濾掉「先接受再刪掉」的假陽性。
+    transferable_when: [生成式 / 建議式 AI 產品, 使用者會在流程中即時取捨模型輸出]
+    caveats: >-
+      55% 這個數字來自特定任務的受控實驗，不可外推到所有開發情境；
+      採納率可被「降低建議門檻」灌水，需搭配留存率與品質護欄。
+    source: GitHub 官方部落格研究報告（2022-2023）
+    confidence: medium
+
+  - id: llm_product_eval_harness_pattern
+    name: LLM 產品的離線評測 + 線上護欄雙軌制
+    company: 業界通用實踐（Anthropic / OpenAI / Scale AI 等公開文件彙整）
+    era: 2023-
+    business_model: [ai_product]
+    growth_stage: [pre_pmf, pmf_to_scale]
+    lever: [retention, efficiency]
+    situation: >-
+      模型或 prompt 一改，品質可能整體位移，且退化往往在使用者投訴時才被發現。
+    action: >-
+      建立黃金測試集（golden set）＋自動評測（LLM-as-judge + 規則閘門）作為
+      發版前的離線關卡；線上同步監控人工介入率、重試率、負面回饋率作為護欄指標；
+      任何模型/prompt 變更走灰度發布。
+    result: >-
+      成為生成式產品發版流程的通用做法（各家官方工程部落格與評測工具文件均採此結構）。
+    why_it_works: 生成式輸出無單一正解，只能用「分布是否退化」而非「單筆是否正確」來管理品質。
+    transferable_when: [產品輸出由 LLM 生成, 有模型/prompt 迭代需求]
+    caveats: >-
+      LLM-as-judge 本身會漂移，需定期用人工標註校準；
+      黃金測試集會過擬合，需持續從線上失敗案例補充。
+    source: 各家 LLM 供應商官方評測文件與工程部落格之共通模式（非單一來源）
+    confidence: medium
+
+  - id: ai_cost_per_task_unit_economics
+    name: AI 產品的單任務成本治理
+    company: 業界通用實踐
+    era: 2023-
+    business_model: [ai_product, b2b_saas]
+    growth_stage: [pmf_to_scale, scale]
+    lever: [efficiency, revenue]
+    situation: >-
+      推論成本隨使用量線性成長，若定價為固定訂閱制，重度使用者會侵蝕毛利。
+    action: >-
+      以「單任務成本（cost per successful task）」為營運指標，
+      拆解為 token 用量 × 單價 × 重試次數；用模型分級路由（小模型先行、
+      失敗才升級）、快取、以及對高成本行為設用量上限來控管。
+    result: 成為 AI SaaS 毛利管理的標準做法。
+    why_it_works: >-
+      把成本綁在「成功完成的任務」而非「呼叫次數」，
+      讓失敗重試的成本浮上檯面，避免用便宜模型省錢卻因重試而更貴的假象。
+    transferable_when: [推論成本佔營收比例顯著, 使用量分布長尾]
+    caveats: 過度降級模型會傷害品質並提高流失，成本指標必須與品質護欄同時看。
+    source: 業界通用實踐彙整（各 AI SaaS 公司工程/財務部落格共通模式）
+    confidence: medium
+
+  # ============================================================
+  #  實驗文化 / 組織
+  # ============================================================
+  - id: booking_experimentation_culture
+    name: Booking.com 的全員實驗制度
+    company: Booking.com
+    era: 2010-2019
+    business_model: [marketplace, b2c]
+    growth_stage: [scale, mature]
+    lever: [acquisition, activation, revenue]
+    situation: 主觀意見驅動的改版難以判斷成效，且高層意見容易壓過資料。
+    action: >-
+      建立任何員工都能在無需審批下啟動 A/B 測試的平台，
+      同時強制所有實驗預先登記假設與成功指標；實驗結果公開透明。
+    result: >-
+      公開報導其同時運行的實驗規模達上千個；成為大規模實驗文化的代表案例
+      （Harvard Business Review 2020 專文報導）。
+    why_it_works: >-
+      降低實驗的啟動成本 → 提高假設吞吐量；預先登記防止事後挑選有利指標（p-hacking）。
+    transferable_when: [流量足以達成統計檢定力, 改動可被切分為可測單元]
+    caveats: >-
+      低流量產品跑不出顯著性，硬跑會被雜訊誤導；
+      大量實驗會產生互相干擾與多重比較問題，需要平台層治理。
+    source: Stefan Thomke "Building a Culture of Experimentation"（Harvard Business Review, 2020）
+    confidence: high
+
+  - id: amazon_working_backwards_prfaq
+    name: Amazon Working Backwards（PR/FAQ）
+    company: Amazon
+    era: 2004-
+    business_model: [b2c, enterprise]
+    growth_stage: [pre_pmf, scale]
+    lever: [activation, revenue]
+    situation: 團隊容易從「我們能做什麼」出發，做出技術上可行但客戶不需要的東西。
+    action: >-
+      任何新產品在動工前先寫一份「上線新聞稿 + 常見問答」，
+      用客戶語言描述價值；寫不清楚就不立項。六頁備忘錄取代簡報，會議開場先靜讀。
+    result: 成為 Amazon 產品立項的標準流程，並被廣泛採用於其他公司。
+    why_it_works: >-
+      強迫在投入資源前先驗證「價值敘事是否成立」，
+      文字比簡報更難掩蓋邏輯漏洞。
+    transferable_when: [立項決策成本高, 需要跨部門對齊, 有寫作文化基礎]
+    caveats: >-
+      在需要快速試錯的早期階段可能過重；
+      寫得好不等於做得成，仍需真實使用者驗證。
+    source: Colin Bryar & Bill Carr《Working Backwards》（2021）; Amazon 股東信
+    confidence: high
+
+  # ============================================================
+  #  日本市場特性
+  # ============================================================
+  - id: jp_enterprise_saas_sales_led_reality
+    name: 日本企業 SaaS 的銷售主導現實
+    company: 日本 SaaS 業界通則（SmartHR / freee / Sansan 等公開 IR 與登壇資料彙整）
+    era: 2018-
+    business_model: [b2b_saas, enterprise]
+    growth_stage: [pmf_to_scale, scale]
+    lever: [acquisition, expansion]
+    situation: >-
+      日本企業採購決策多為稟議（ringi）制的集體決議，導入前要求詳細評估、
+      現場說明與客製對應，純 PLG 自助導入的滲透速度低於歐美。
+    action: >-
+      多數日本 SaaS 採「行銷產生線索 → 內勤銷售（インサイドセールス）→ 外勤銷售
+      → 客戶成功」的分工（The Model 型組織），PLG 元素多用於漏斗上緣的試用與擴散，
+      而非取代銷售。
+    result: 成為日本 B2B SaaS 的主流組織與獲客結構。
+    why_it_works: >-
+      配合稟議制的多方關係人決策，銷售負責在組織內部搬運共識，
+      這是產品自助流程難以替代的功能。
+    transferable_when: [目標客戶為日本企業, 客單價足以支撐銷售成本]
+    caveats: >-
+      這是結構性描述而非鐵律，SMB 與開發者工具領域仍有 PLG 空間；
+      套用時務必以該公司實際的商業模式與客層驗證，不要直接假設。
+    source: 日本 SaaS 上市公司 IR 說明資料與業界登壇內容之共通結構彙整
+    confidence: medium
+
+  - id: jp_ai_governance_expectation
+    name: 日本企業導入 AI 時的治理期待
+    company: 日本市場通則
+    era: 2023-
+    business_model: [ai_product, enterprise]
+    growth_stage: [pmf_to_scale]
+    lever: [acquisition, retention]
+    situation: >-
+      日本企業導入生成式 AI 時，資安・個資・出力責任的稟議關卡往往比功能評估更關鍵，
+      採購方會要求說明資料是否用於再學習、記錄保存、以及誤出力時的責任歸屬。
+    action: >-
+      產品端把「治理素材」當作產品的一部分：資料處理說明書、稽核日誌、
+      權限與遮罩設定、模型變更通知，並在銷售流程早期就交付。
+    result: 治理素材完備度直接影響導入週期長度，是日本 AI SaaS 的實質競爭要素。
+    why_it_works: 稟議制下阻力來自風險擔當者，先解除風險疑慮才輪到功能比較。
+    transferable_when: [銷售對象為日本企業, 產品處理客戶資料或生成對外內容]
+    caveats: >-
+      具體法規要求依業種（金融/醫療/公部門）差異極大，
+      務必以該公司實際適用的法規確認，不可一概而論。
+    source: 日本企業 AI 導入相關公開指引與業界實務之共通觀察
+    confidence: medium

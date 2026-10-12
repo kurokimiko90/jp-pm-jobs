@@ -1,0 +1,22 @@
+# 面接パック自動生成の設定範本 — 複製為 config/prep.yaml 後修改
+# （缺檔 = 全用以下預設值，行為不變）
+#
+# 對象：inbox/prep_trigger.py（日程確定済みの面接 → prep.py {id} interview）
+
+# 自動生成そのものの ON/OFF（false = 通知も生成もしない）
+auto_interview_pack: true
+
+# 自動で回す stage。
+#   slides — 品質未達のため既定で外す（必要なら手動で prep.py {id} interview --stage slides）
+#   voice  — 指揮中心の ChatGPT アカウントを十数分占有するので在席時に手動で回す
+# 音声まで自動で欲しい場合は末尾に voice を足す
+auto_interview_stages: [qa, jikoshoukai, checklist, script]
+
+# 1 ラウンド（inbox 掃描 1 回 = 30 分）で生成する本数の上限
+auto_interview_max_per_run: 1
+
+# 失敗時の再試行上限（同じ面接日程あたり）
+auto_interview_max_attempts: 2
+
+# prep.py 1 本あたりの timeout 秒（voice を足す場合は余裕を見る）
+auto_interview_timeout_sec: 3600

@@ -1,0 +1,18 @@
+# AI 職涯助手設定範本 — 複製為 config/assistant.yaml 後修改（缺檔 = 全用以下預設值）
+
+# 互動問答走 miko-ws 指揮中心的哪個 engine。agy = Antigravity CLI 快模型（gemini flash）
+# 優先、90s 內沒回就落 Chrome pool；codex = 舊行為（codex 失敗後落 pool）
+chat_engine: agy
+
+# 問答的 HTTP 逾時秒數（agy 持ち時間 90s ＋ pool 備援 1 輪 180s）
+chat_timeout: 300
+
+# 每週總結歸納用模型（量夠大才需要較強模型做主題聚類）
+digest_model: claude-sonnet-4-5
+
+# 每輪問答帶入 prompt 的歷史輪數（多輪對話上下文）
+history_window: 6
+
+# ── 排程總結（scripts/assistant_daily_digest.sh / assistant_weekly_digest.sh）──
+daily_digest_enabled: true
+weekly_digest_enabled: true

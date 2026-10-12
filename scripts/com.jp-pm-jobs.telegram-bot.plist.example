@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Telegram 互動 bot（notify/bot.py）long-polling daemon。
+  token/chat_id 放專案 .env（TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID），
+  由 notify 模組自動載入 — 本檔不含任何秘密，可安心分享。
+
+  安裝（把 /path/to/jp-pm-jobs 與 python3 路徑改成自己的）:
+    cp scripts/com.jp-pm-jobs.telegram-bot.plist.example \
+       ~/Library/LaunchAgents/com.jp-pm-jobs.telegram-bot.plist
+    （編輯路徑後）
+    launchctl load ~/Library/LaunchAgents/com.jp-pm-jobs.telegram-bot.plist
+  停用:
+    launchctl unload ~/Library/LaunchAgents/com.jp-pm-jobs.telegram-bot.plist
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.jp-pm-jobs.telegram-bot</string>
+
+    <!-- python3 直接進入（macOS TCC：python3 需有 ~/Documents 授權，見 launchd_shim.py 註解） -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/opt/homebrew/bin/python3</string>
+        <string>-m</string>
+        <string>notify.bot</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/path/to/jp-pm-jobs</string>
+
+    <!-- 常駐：崩潰/網路斷線自動重啟 -->
+    <key>KeepAlive</key>
+    <true/>
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+
+    <key>StandardOutPath</key>
+    <string>/path/to/jp-pm-jobs/output/logs/telegram-bot.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/path/to/jp-pm-jobs/output/logs/telegram-bot.err.log</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+</dict>
+</plist>

@@ -1,0 +1,21 @@
+# 機密語の遮蔽（缺檔 = 何もしない）— 勤務先の取引先・接続ブランド・協業先の名前を
+# LLM prompt と生成物から消す。PII（氏名・連絡先）は tools/deid.py の担当で別枠。
+#
+# cp config/redaction.yaml.example config/redaction.yaml して自分の NDA 範囲を書く。
+# 診断: python3 -m tools.redact （profile に残っている禁止語を一覧）
+#
+# 対象外（消さない）: 自分の所属企業名、自社プロダクト名 — 履歴書に書くべき情報。
+
+# 禁止語を含む括弧列挙は丸ごと落とす（「（A・B・C 等）」→ 削除）
+drop_parenthetical: true
+
+terms:
+  # 接続先の共通ポイントブランド
+  - match: ["ブランドA", "BrandA", "ブランドB"]
+    replace: "大手共通ポイント"
+  # 協業した通信キャリア
+  - match: ["キャリアX", "CarrierX"]
+    replace: "通信キャリア"
+  # 取引先の事業会社名
+  - match: ["取引先A株式会社"]
+    replace: "大手事業会社"

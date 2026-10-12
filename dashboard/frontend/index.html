@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JobPilot</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&family=Noto+Sans+JP:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400..600&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --paper: #F6EFE4;
+        /* 卡片：髮絲邊框 + 低擴散陰影（取代舊的 40px 霧狀大陰影，層次靠邊不靠霧） */
+        --shadow-card: 0 0 0 1px rgb(63 56 48 / 7%), 0 1px 2px rgb(63 56 48 / 5%), 0 18px 40px -24px rgb(63 56 48 / 22%);
+        --shadow-card-sm: 0 0 0 1px rgb(63 56 48 / 7%), 0 1px 2px rgb(63 56 48 / 5%);
+        --ease-out: cubic-bezier(.22, 1, .36, 1);
+      }
+      html { scrollbar-gutter: stable; }
+      /* 書體・字級・字間は src/typography.css（字體系統の単一ソース） */
+      body { margin: 0; background: var(--paper); color: #3F3830; }
+      * { box-sizing: border-box; }
+      table { border-collapse: collapse; }
+      button { cursor: pointer; }
+      ::selection { background: #F5C84266; }
+      :focus-visible { outline: 2px solid #F5C842; outline-offset: 2px; border-radius: 4px; }
+      /* アニメーション：淡入+輕位移，無 overshoot（生産性ツールに適した抑制） */
+      @keyframes riseIn {
+        from { opacity: 0; transform: translateY(6px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes panelIn {
+        from { opacity: 0; transform: translateY(-8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

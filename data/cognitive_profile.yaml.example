@@ -1,0 +1,12 @@
+# 認知數據 / 目標年收 — 複製為 cognitive_profile.yaml 後填寫
+# ─────────────────────────────────────────────────────────
+# 評分器只讀 target_salary_min / target_salary_max（萬円）。
+# dimensions 為可選的自我認知數據（有 LLM 使用紀錄分析工具者可自行填入，
+# 會被面試準備 prompt 引用；沒有就整段刪掉）。
+
+target_salary_min: 800
+target_salary_max: 1500
+
+# dimensions:
+#   problem_decomposition: {score: 0, evidence: TODO}
+#   iteration_speed: {score: 0, evidence: TODO}

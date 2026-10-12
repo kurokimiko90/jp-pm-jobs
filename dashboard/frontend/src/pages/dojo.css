@@ -1,0 +1,113 @@
+/* 面接練習（Dojo）トップ — .dj-* 名前空間 */
+
+.dj-progress {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+  padding: 20px 24px;
+  border-radius: 20px;
+  background: #FFFCF7;
+  box-shadow: var(--shadow-card);
+}
+
+.dj-progress-main { display: flex; align-items: baseline; gap: 6px; }
+.dj-progress-n { color: var(--c-ink); font-size: var(--fs-display); line-height: 1; }
+.dj-progress-of { color: rgb(63 56 48 / 50%); font-size: var(--fs-body-lg); font-variant-numeric: tabular-nums; }
+
+.dj-progress-bar {
+  display: flex;
+  height: 8px;
+  gap: 2px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgb(63 56 48 / 7%);
+}
+.dj-progress-bar > span { display: block; height: 100%; transition: width 600ms var(--ease-out); }
+
+.dj-progress-legend {
+  display: flex;
+  gap: 16px;
+  color: rgb(63 56 48 / 62%);
+  font-size: var(--fs-small);
+  white-space: nowrap;
+}
+.dj-progress-legend i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 2px;
+  vertical-align: 1px;
+}
+.dj-progress-legend b { color: var(--c-ink); font-size: var(--fs-body-lg); font-weight: 500; }
+
+.dj-companies { display: flex; flex-wrap: wrap; gap: 8px; }
+.dj-chip-n {
+  margin-left: 6px;
+  opacity: .6;
+  font-variant-numeric: tabular-nums;
+}
+
+.dj-modes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.dj-mode {
+  position: relative;
+  display: flex;
+  min-height: 188px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 22px 24px;
+  color: var(--c-ink);
+  text-align: left;
+  border: 0;
+  border-radius: 20px;
+  background: #FFFCF7;
+  box-shadow: var(--shadow-card);
+  transition: transform 220ms var(--ease-out), box-shadow 220ms ease;
+}
+
+.dj-mode:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 1px rgb(63 56 48 / 9%), 0 22px 44px -22px rgb(63 56 48 / 30%);
+}
+
+.dj-mode:disabled { cursor: default; opacity: .55; }
+
+.dj-mode--primary { background: var(--c-gold); }
+.dj-mode--primary .dj-mode-icon { background: rgb(255 255 255 / 55%); }
+.dj-mode--primary .dj-mode-desc { color: rgb(63 56 48 / 78%); }
+
+.dj-mode-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  margin-bottom: 18px;
+  place-items: center;
+  border-radius: 12px;
+  background: rgb(63 56 48 / 6%);
+}
+
+.dj-mode-title { font-size: var(--fs-title); font-weight: 700; letter-spacing: var(--tr-heading); }
+.dj-mode-desc { color: rgb(63 56 48 / 62%); font-size: var(--fs-small); line-height: var(--lh-ui); }
+
+.dj-mode-go {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  transition: transform 220ms var(--ease-out);
+}
+.dj-mode:not(:disabled):hover .dj-mode-go { transform: translateX(3px); }
+
+@media (max-width: 900px) {
+  .dj-modes { grid-template-columns: minmax(0, 1fr); }
+  .dj-mode { min-height: 0; }
+  .dj-mode-icon { margin-bottom: 6px; }
+  .dj-progress { grid-template-columns: auto minmax(0, 1fr); }
+  .dj-progress-legend { grid-column: 1 / -1; }
+}

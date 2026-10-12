@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>職務経歴書 - {{ name_ja }}</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --ink:       #1a1a1a;
+  --ink-2:     #3d4451;
+  --ink-3:     #6b7280;
+  --accent:    #1e3a5f;
+  --accent-l:  #2d5a8e;
+  --accent-bg: rgba(30,58,95,.04);
+  --gold:      #f5c842;
+  --gold-dim:  rgba(245,200,66,.12);
+  --border:    #d1d5db;
+  --border-l:  #e8eaed;
+  --bg:        #ffffff;
+  --bg-2:      #f7f8fa;
+  --radius:    5px;
+  --sans:      'Noto Sans JP', 'Hiragino Sans', sans-serif;
+  --sp-xs: 4px; --sp-s: 8px; --sp-m: 14px; --sp-l: 20px; --sp-xl: 28px;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: antialiased; font-feature-settings: 'palt'; }
+body { background: #dfe1e6; padding: 20px 0; }
+
+.page {
+  background: var(--bg); width: 210mm; height: 297mm;
+  padding: 14mm 16mm 12mm;
+  margin: 0 auto 20px; position: relative;
+  box-shadow: 0 1px 3px rgba(0,0,0,.03), 0 4px 16px rgba(30,58,95,.06), 0 0 0 1px rgba(30,58,95,.02);
+  overflow: hidden;
+}
+.page::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 3px; background: linear-gradient(90deg, var(--accent) 0%, var(--accent-l) 70%, rgba(45,90,142,.2) 100%);
+}
+.page:first-child::after {
+  content: attr(data-page);
+  position: absolute; bottom: 9mm; right: 16mm;
+  font-size: 8pt; color: var(--ink-3); letter-spacing: .05em;
+}
+@media print {
+  body { background: white; padding: 0; }
+  .page { box-shadow: none; margin: 0; padding: 12mm 14mm 10mm; width: auto; height: auto; page-break-after: always; overflow: visible; }
+  .page:last-child { page-break-after: avoid; }
+}
+@page { size: A4; margin: 6mm 0; }
+
+.t-h   { font-size: 14pt;  font-weight: 700; line-height: 1.35; color: var(--ink); }
+.t-b   { font-size: 11.5pt; font-weight: 400; line-height: 1.6;  color: var(--ink-2); }
+.t-c   { font-size: 10pt;  font-weight: 400; line-height: 1.5;  color: var(--ink-3); }
+
+.header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 8px; border-bottom: 2px solid var(--accent); margin-bottom: var(--sp-m); }
+.header-left .kana { font-size: 8.5pt; color: var(--ink-3); letter-spacing: .2em; font-weight: 300; }
+.header-left h1 { font-size: 28pt; font-weight: 700; letter-spacing: -.03em; color: var(--ink); line-height: 1.15; margin: 2px 0 4px; }
+.header-left .title-line { font-size: 11.5pt; color: var(--accent-l); font-weight: 500; line-height: 1.4; }
+.header-right { text-align: right; padding-bottom: 2px; }
+.header-right .doc-title { font-size: 14pt; font-weight: 700; color: var(--accent); letter-spacing: .08em; white-space: nowrap; }
+.header-right .meta-line { font-size: 9pt; color: var(--ink-3); margin-top: 4px; line-height: 1.5; white-space: nowrap; }
+
+.section { margin-bottom: 11px; }
+.section-title {
+  font-size: 10.5pt; font-weight: 700; letter-spacing: .05em; color: var(--accent);
+  padding: 0 0 4px 0; margin-bottom: 7px;
+  border-bottom: none;
+  display: flex; align-items: center; gap: 7px;
+}
+.section-title::before {
+  content: ''; width: 3px; height: 11px; background: var(--accent); border-radius: 2px; flex-shrink: 0;
+}
+.section-title::after {
+  content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border) 0%, transparent 100%);
+}
+
+.fit-box {
+  padding: 11px 16px; border-radius: var(--radius);
+  background: linear-gradient(135deg, #172b42 0%, var(--accent) 50%, #243f62 100%);
+  color: rgba(255,255,255,.88);
+  font-size: 10pt; line-height: 1.65;
+  border: 1px solid rgba(255,255,255,.08);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 2px 8px rgba(30,58,95,.12);
+}
+.fit-box .fit-label {
+  font-weight: 700; color: var(--gold); font-size: 8pt;
+  letter-spacing: .15em; margin-bottom: 6px; text-transform: uppercase;
+  opacity: .8;
+}
+.fit-box strong { color: var(--gold); font-weight: 700; }
+.fit-box .fit-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: rgba(245,200,66,.2); color: var(--gold);
+  font-size: 8.5pt; font-weight: 700; margin-right: 5px; flex-shrink: 0;
+  vertical-align: middle;
+}
+.fit-box .fit-row { display: flex; align-items: baseline; margin-bottom: 3px; }
+.fit-box .fit-row:last-child { margin-bottom: 0; }
+.fit-box .fit-sub { color: rgba(255,255,255,.55); font-size: 9pt; }
+
+.summary-block {
+  font-size: 10.5pt; line-height: 1.75; color: var(--ink-2);
+  padding: 12px 16px; background: var(--bg-2); border-radius: var(--radius);
+  border-left: 3px solid var(--accent);
+  box-shadow: 0 1px 3px rgba(0,0,0,.03);
+  white-space: pre-line;
+}
+.summary-block strong { color: var(--ink); font-weight: 600; }
+
+.comp-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px 10px; }
+.comp-col h4 { font-size: 9pt; font-weight: 600; color: var(--accent); margin-bottom: 5px; letter-spacing: .06em; }
+.comp-col .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip {
+  display: inline-block; padding: 2px 8px;
+  border: 1px solid var(--border); border-radius: 4px;
+  font-size: 8.5pt; color: var(--ink-2); background: var(--bg); white-space: nowrap;
+  letter-spacing: .02em;
+}
+
+.exp { display: grid; grid-template-columns: 28mm 1fr; gap: 10px; margin-bottom: var(--sp-s); padding-bottom: var(--sp-s); border-bottom: 1px solid var(--border-l); }
+.exp:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+.exp-meta { font-size: 8.5pt; color: var(--ink-3); line-height: 1.4; }
+.exp-meta .period { font-weight: 600; font-size: 9.5pt; color: var(--accent); }
+.exp-meta .info { margin-top: 1px; }
+.exp-body h3 { font-size: 13.5pt; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
+.exp-body .role { font-size: 9.5pt; color: var(--accent-l); font-weight: 500; margin-bottom: var(--sp-xs); line-height: 1.5; }
+.exp-body .field-label { font-size: 8pt; font-weight: 700; color: var(--ink-3); letter-spacing: .08em; margin: 5px 0 3px; }
+
+ul.bl { list-style: none; }
+ul.bl li { position: relative; padding-left: 12px; margin-bottom: 9px; font-size: 10pt; line-height: 1.5; color: var(--ink-2); }
+ul.bl li::before { content: ''; position: absolute; left: 0; top: .55em; width: 4px; height: 4px; background: var(--accent); border-radius: 50%; }
+ul.bl li strong { color: var(--ink); font-weight: 600; }
+.exp-body ul.bl li strong { display: block; }
+
+.metrics { display: flex; gap: 8px; margin-top: var(--sp-s); }
+.metric {
+  background: linear-gradient(135deg, var(--accent) 0%, #172b42 100%);
+  color: white; padding: 8px 16px; border-radius: var(--radius);
+  display: flex; align-items: baseline; gap: 8px;
+  box-shadow: 0 2px 6px rgba(30,58,95,.18);
+}
+.metric .val { font-size: 22pt; font-weight: 700; line-height: 1; color: var(--gold); }
+.metric .lbl { font-size: 8.5pt; font-weight: 400; opacity: .85; white-space: pre-line; line-height: 1.35; }
+
+.proj-wrap { background: var(--bg-2); border-radius: var(--radius); padding: 18px 20px; border-left: 3px solid var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,.03); }
+.proj { margin-bottom: 0; }
+.proj-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+.proj-head h3 { font-size: 13pt; font-weight: 700; color: var(--accent); }
+.proj-head .role { font-size: 9pt; color: var(--accent-l); font-weight: 500; background: var(--accent-bg); padding: 2px 8px; border-radius: 3px; }
+.proj .stack { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 7px; }
+.proj .stack-chip { display: inline-block; padding: 2px 8px; border: 1px solid var(--border); border-radius: 3px; font-size: 8pt; color: var(--ink-3); background: var(--bg); }
+.proj .desc { font-size: 10pt; color: var(--ink-2); line-height: 1.65; margin-bottom: 7px; }
+.proj .desc strong { color: var(--accent); font-weight: 600; }
+.proj-divider { height: 1px; background: var(--border-l); margin: 6px 0; }
+
+.pr-grid { display: grid; gap: 5px; }
+.pr-item { padding: 6px 12px 6px 44px; background: var(--bg-2); border-radius: var(--radius); position: relative; border-left: 3px solid var(--accent); }
+.pr-item::before {
+  content: attr(data-num);
+  position: absolute; left: 12px; top: 9px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent) 0%, #172b42 100%);
+  color: var(--gold);
+  font-size: 9.5pt; font-weight: 700; line-height: 22px; text-align: center;
+}
+.pr-item .pr-title { font-size: 11pt; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+.pr-item .pr-body { font-size: 10pt; color: var(--ink-2); line-height: 1.55; }
+.pr-item .pr-body strong { color: var(--accent); font-weight: 600; }
+
+.skill-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; padding: 6px 0; }
+.skill-grid li { position: relative; padding-left: 14px; font-size: 10pt; line-height: 1.7; color: var(--ink-2); list-style: none; }
+.skill-grid li::before { content: ''; position: absolute; left: 0; top: .6em; width: 7px; height: 7px; border-radius: 2px; background: var(--accent); opacity: .2; }
+.skill-grid li::after { content: ''; position: absolute; left: 1.5px; top: calc(.6em + 1.5px); width: 4px; height: 4px; border-radius: 1px; background: var(--accent); }
+
+.info-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+.info-table td { padding: 7px 12px; border-bottom: 1px solid var(--border-l); vertical-align: top; line-height: 1.55; }
+.info-table td:first-child { width: 22mm; color: var(--ink-3); font-weight: 600; white-space: nowrap; }
+.info-table tr:last-child td { border-bottom: none; padding-bottom: 2px; }
+.info-table .lang-row { display: flex; gap: 14px; flex-wrap: wrap; }
+
+/* P2 spacing boost (fill bottom blank) */
+.page + .page .exp { margin-bottom: 12px; padding-bottom: 12px; }
+.page:last-child .page-header-slim { margin-bottom: 14px; }
+
+.page-header-slim {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding-bottom: 6px; border-bottom: 1.5px solid var(--accent); margin-bottom: 14px;
+  font-size: 9pt; color: var(--ink-3);
+}
+.page-header-slim .name { font-weight: 600; color: var(--ink-2); font-size: 9.5pt; }
+</style>
+</head>
+<body>
+
+<!-- ==================== PAGE 1 ==================== -->
+<div class="page" data-page="1 / 3">
+
+  <div class="header">
+    <div class="header-left">
+      <div class="kana">{{ kana }}</div>
+      <h1>{{ name_ja }}</h1>
+      <div class="title-line">{{ title_line | md_bold }}</div>
+    </div>
+    <div class="header-right">
+      <div class="doc-title">職務経歴書</div>
+      <div class="meta-line">{{ today }}　永住者</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="fit-box">
+      <div class="fit-label">本ポジションとの適合性</div>
+      {% for fp in fit_points %}
+      <div class="fit-row"><span class="fit-num">{{ loop.index }}</span>{{ fp.text | md_bold }}</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">職務要約</div>
+    <div class="summary-block">{{ summary | md_bold }}</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">職務経歴</div>
+    {% for exp in p1_experiences %}
+    <div class="exp">
+      <div class="exp-meta">
+        <div class="period">{{ exp.period }}</div>
+        {% for f in exp.info_fields %}<div class="info">{{ f.label }}：{{ f.value }}</div>{% endfor %}
+      </div>
+      <div class="exp-body">
+        <h3>{{ exp.company }}</h3>
+        <div class="role">{{ exp.role }}</div>
+        {% if exp.bullets %}
+        <div class="field-label">主な実績</div>
+        <ul class="bl">
+          {% for b in exp.bullets %}<li>{{ b | replace('**。', '**') | md_bold }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+        {% if exp.metrics %}
+        <div class="metrics">
+          {% for m in exp.metrics %}<div class="metric"><div class="val">{{ m.val }}</div><div class="lbl">{{ m.lbl }}</div></div>{% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<!-- ==================== PAGE 2 ==================== -->
+<div class="page" data-page="2 / 3">
+
+  <div class="page-header-slim">
+    <span class="name">{{ name_ja }} - 職務経歴書</span>
+    <span>2 / 3</span>
+  </div>
+
+  <div class="section">
+    <div class="section-title">職務経歴（続き）</div>
+    {% for exp in p2_experiences %}
+    <div class="exp">
+      <div class="exp-meta">
+        <div class="period">{{ exp.period }}</div>
+        {% for f in exp.info_fields %}<div class="info">{{ f.label }}：{{ f.value }}</div>{% endfor %}
+      </div>
+      <div class="exp-body">
+        <h3>{{ exp.company }}</h3>
+        <div class="role">{{ exp.role }}</div>
+        {% if exp.bullets %}
+        <div class="field-label">主な実績</div>
+        <ul class="bl">
+          {% for b in exp.bullets %}<li>{{ b | replace('**。', '**') | md_bold }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+        {% if exp.metrics %}
+        <div class="metrics">
+          {% for m in exp.metrics %}<div class="metric"><div class="val">{{ m.val }}</div><div class="lbl">{{ m.lbl }}</div></div>{% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="section">
+    <div class="section-title">個人プロジェクト - AI 実装力の証拠</div>
+    <div class="proj-wrap">
+      {% for pj in projects %}
+      <div class="proj">
+        <div class="proj-head">
+          <h3>{{ pj.title }}</h3>
+          <span class="role">{{ pj.role }}</span>
+        </div>
+        <div class="stack">{% for s in pj.stack %}<span class="stack-chip">{{ s }}</span>{% endfor %}</div>
+        <div class="desc">{{ pj.desc | md_bold }}</div>
+        {% if pj.bullets %}
+        <ul class="bl">
+          {% for b in pj.bullets %}<li>{{ b | md_bold }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+      {% if not loop.last %}<div class="proj-divider"></div>{% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+<!-- ==================== PAGE 3 ==================== -->
+<div class="page" data-page="3 / 3">
+
+  <div class="page-header-slim">
+    <span class="name">{{ name_ja }} - 職務経歴書</span>
+    <span>3 / 3</span>
+  </div>
+
+  <div class="section">
+    <div class="section-title">自己 PR</div>
+    <div class="pr-grid">
+      {% for pr in self_pr %}
+      <div class="pr-item" data-num="{{ loop.index }}">
+        <div class="pr-title">{{ pr.title }}</div>
+        <div class="pr-body">{{ pr.body | md_bold }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">活かせる経験・知識</div>
+    <ul class="skill-grid">
+      {% for sk in skills_applicable %}<li>{{ sk }}</li>{% endfor %}
+    </ul>
+  </div>
+
+  <div class="section">
+    <div class="section-title">コアコンピテンシー</div>
+    <div class="comp-grid">
+      {% for comp in competencies[:3] %}
+      <div class="comp-col">
+        <h4>{{ comp.title }}</h4>
+        <div class="chips">{% for c in comp.chips[:3] %}<span class="chip">{{ c }}</span>{% endfor %}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">学歴・資格・語学</div>
+    <table class="info-table">
+      <tbody>
+        {% for edu in education %}
+        <tr><td>{% if loop.first %}学歴{% endif %}</td><td>{{ edu }}</td></tr>
+        {% endfor %}
+        {% for cert in certifications %}
+        <tr><td>{% if loop.first %}資格{% endif %}</td><td>{{ cert }}</td></tr>
+        {% endfor %}
+        <tr><td>語学</td><td><div class="lang-row">{% for l in languages %}<span>{{ l }}</span>{% endfor %}</div></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+</body></html>

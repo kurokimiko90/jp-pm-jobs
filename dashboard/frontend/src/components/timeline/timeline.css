@@ -1,0 +1,323 @@
+/* データ統計ページ（#/applications/timeline）専用。すべて .tl- 名前空間。
+ * 方針：紙面＋髪線、数字は Fraunces、色はデータの意味にだけ使う（Today と同じ語彙）。 */
+
+.tl-page {
+  --tl-mute: rgb(63 56 48 / 62%);
+  --tl-faint: rgb(63 56 48 / 44%);
+  --tl-rule: rgb(63 56 48 / 10%);
+  --tl-surface: #FFFCF7;
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+  padding-bottom: 48px;
+}
+
+.tl-eyebrow {
+  display: block;
+  color: var(--tl-mute);
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+}
+
+/* ── Hero ── */
+.tl-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 4px 0 0;
+}
+.tl-hero-title {
+  margin: 8px 0 0;
+  color: var(--c-ink);
+  font-family: var(--font-display);
+  font-size: var(--fs-hero);
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+.tl-hero-range {
+  margin: 12px 0 0;
+  color: var(--tl-mute);
+  font-size: var(--fs-body-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+.tl-kpis {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+  border-top: 1px solid var(--c-ink);
+  border-bottom: 1px solid var(--tl-rule);
+}
+.tl-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 16px 20px 18px;
+  border-left: 1px solid var(--tl-rule);
+}
+.tl-kpi:first-child { padding-left: 0; border-left: 0; }
+.tl-kpi dt {
+  color: var(--tl-mute);
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  letter-spacing: .04em;
+}
+.tl-kpi dd { margin: 0; }
+.tl-kpi .tl-kpi-value {
+  margin-top: 6px;
+  color: var(--c-ink);
+  font-size: var(--fs-display);
+  font-weight: 400;
+  line-height: 1;
+}
+.tl-kpi-value small { margin-left: 2px; font-size: .5em; font-weight: 500; letter-spacing: 0; }
+.tl-kpi--accent .tl-kpi-value { color: var(--c-amber-ink); }
+.tl-kpi--progress .tl-kpi-value { color: var(--c-applied-ink); }
+.tl-kpi--good .tl-kpi-value { color: var(--c-success-green); }
+.tl-kpi .tl-kpi-sub {
+  margin-top: 8px;
+  color: var(--tl-mute);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── 区ナビ ── */
+.tl-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  margin: -24px calc(-1 * var(--app-gutter)) -32px;
+  padding: 10px var(--app-gutter);
+  border-bottom: 1px solid var(--tl-rule);
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
+  backdrop-filter: saturate(1.2) blur(12px);
+  scrollbar-width: none;
+}
+.tl-nav-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 6px 14px 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--tl-mute);
+  font: inherit;
+  font-size: var(--fs-small);
+  font-weight: 600;
+  cursor: pointer;
+  transition: color .2s var(--ease-out), background .2s var(--ease-out), border-color .2s var(--ease-out);
+}
+.tl-nav-chip:hover { color: var(--c-ink); border-color: var(--tl-rule); background: var(--tl-surface); }
+.tl-nav-chip[aria-current] { color: var(--tl-surface); background: var(--c-ink); }
+.tl-nav-chip:focus-visible { outline: 2px solid var(--c-amber-ink); outline-offset: 2px; }
+.tl-nav-num {
+  font-family: var(--font-num);
+  font-size: var(--fs-meta);
+  font-variant-numeric: lining-nums tabular-nums;
+  opacity: .7;
+}
+
+/* ── 区 ── */
+.tl-section { scroll-margin-top: 64px; }
+.tl-section-head {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 0 8px;
+  align-items: start;
+  padding-top: 20px;
+  border-top: 1px solid var(--c-ink);
+}
+.tl-section-num {
+  color: var(--c-amber);
+  font-size: var(--fs-display);
+  font-weight: 300;
+  line-height: .9;
+}
+.tl-section-text { min-width: 0; }
+.tl-section-title {
+  margin: 6px 0 6px;
+  color: var(--c-ink);
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  letter-spacing: var(--tr-heading);
+  line-height: var(--lh-heading);
+}
+.tl-section-hint { margin: 0; max-width: 68ch; color: var(--tl-mute); font-size: var(--fs-small); line-height: 1.7; }
+.tl-section-body { display: flex; flex-direction: column; gap: 16px; margin-top: 20px; }
+
+/* ── 結論（区の一行目に読むもの） ── */
+.tl-insights {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 0 8px;
+  margin-top: 20px;
+}
+.tl-insights-label {
+  padding-top: 3px;
+  color: var(--c-amber-ink);
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  letter-spacing: var(--tr-label);
+}
+.tl-insights ul {
+  margin: 0;
+  padding: 0 0 0 16px;
+  border-left: 2px solid var(--c-gold);
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tl-insights li {
+  color: var(--c-ink);
+  font-size: var(--fs-body-lg);
+  font-weight: 500;
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums;
+}
+.tl-dot { display: inline-block; width: 7px; height: 7px; margin: 0 10px 2px 0; border-radius: 50%; vertical-align: middle; }
+
+/* ── カード ── */
+.tl-grid { display: grid; gap: 16px; }
+.tl-card {
+  min-width: 0;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--tl-surface);
+  box-shadow: var(--shadow-card-sm);
+}
+.tl-card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.tl-card-hint + * { margin-top: 0; }
+.tl-card-head:has(+ .tl-card-hint) { margin-bottom: 2px; }
+.tl-card-title { margin: 0; color: var(--c-ink); font-size: var(--fs-body-lg); font-weight: 700; }
+.tl-card-right { color: var(--tl-mute); font-size: var(--fs-caption); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tl-card-hint { margin: 0 0 14px; color: var(--tl-mute); font-size: var(--fs-meta); line-height: 1.6; }
+
+/* 左列に 2 枚積む＋右 1 枚 */
+.tl-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.tl-split > :last-child { position: sticky; top: 72px; }
+.tl-stack { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+.tl-quality-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 40px; }
+
+/* ── 面接議程 ── */
+.tl-agenda { display: flex; flex-direction: column; }
+.tl-next {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 0 18px;
+}
+.tl-next-when { display: flex; align-items: baseline; gap: 14px; margin-top: 6px; flex-wrap: wrap; }
+.tl-next-rel { color: var(--c-ink); font-size: var(--fs-display); line-height: 1; }
+.tl-next--soon .tl-next-rel { color: var(--c-error-red); }
+.tl-next-date { color: var(--c-ink); font-size: var(--fs-title); font-weight: 600; font-variant-numeric: tabular-nums; }
+.tl-next-company {
+  margin-top: 10px;
+  color: var(--c-ink);
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tl-next-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; color: var(--tl-mute); font-size: var(--fs-meta); }
+
+.tl-agenda-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--tl-rule);
+  font-size: var(--fs-small);
+}
+.tl-agenda-date { display: flex; flex-direction: column; line-height: 1.3; font-variant-numeric: tabular-nums; }
+.tl-agenda-date strong { color: var(--c-ink); }
+.tl-agenda-date span { color: var(--tl-mute); font-size: var(--fs-caption); }
+.tl-agenda-date .is-soon { color: var(--c-error-red); font-weight: 700; }
+.tl-agenda-company { color: var(--c-ink); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl-agenda-meta { display: flex; gap: 6px; align-items: center; color: var(--tl-mute); font-size: var(--fs-caption); }
+
+/* ── 折りたたみ ── */
+.tl-collapse {
+  padding: 12px 16px;
+  border: 1px solid var(--tl-rule);
+  border-radius: 12px;
+  transition: background .2s var(--ease-out);
+}
+.tl-collapse:hover { background: rgb(255 252 247 / 60%); }
+.tl-collapse-btn {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: var(--tl-mute);
+  font: inherit;
+  font-size: var(--fs-small);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.tl-collapse-btn:hover { color: var(--c-ink); }
+.tl-collapse-btn:focus-visible { outline: 2px solid var(--c-amber-ink); outline-offset: 4px; border-radius: 4px; }
+.tl-caret { display: inline-block; transition: transform .2s var(--ease-out); }
+
+/* ── 入場：スクロールに合わせて区の見出しと結論だけ静かに立ち上げる（グラフは動かさない） ── */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .tl-section-head, .tl-insights {
+      animation: tl-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 100%;
+    }
+  }
+}
+@keyframes tl-rise {
+  from { opacity: 0; transform: translateY(16px); }
+}
+
+@media (max-width: 1100px) {
+  .tl-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tl-kpi:nth-child(4) { padding-left: 0; border-left: 0; }
+  .tl-kpi:nth-child(n + 4) { border-top: 1px solid var(--tl-rule); }
+  .tl-split { grid-template-columns: minmax(0, 1fr); }
+  .tl-split > :last-child { position: static; }
+}
+
+@media (max-width: 900px) {
+  .tl-page { gap: 40px; }
+  .tl-nav { top: 56px; margin-top: -20px; margin-bottom: -24px; }
+  .tl-section { scroll-margin-top: 112px; }
+  .tl-section-head, .tl-insights { grid-template-columns: minmax(0, 1fr); }
+  .tl-section-num { font-size: var(--fs-h2); margin-bottom: 4px; }
+  .tl-insights-label { margin-bottom: 6px; }
+  .tl-quality-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 560px) {
+  .tl-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tl-kpi { padding: 14px 14px 16px; }
+  .tl-kpi:nth-child(n) { border-left: 1px solid var(--tl-rule); border-top: 0; padding-left: 14px; }
+  .tl-kpi:nth-child(odd) { border-left: 0; padding-left: 0; }
+  .tl-kpi:nth-child(n + 3) { border-top: 1px solid var(--tl-rule); }
+  .tl-kpi:first-child { grid-column: 1 / -1; }
+  .tl-kpi:first-child ~ .tl-kpi:nth-child(even) { border-left: 0; padding-left: 0; }
+  .tl-kpi:first-child ~ .tl-kpi:nth-child(odd) { border-left: 1px solid var(--tl-rule); padding-left: 14px; }
+  .tl-kpi-value { font-size: var(--fs-kpi); }
+}

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  AI 職涯助手專用 Telegram 互動 daemon（assistant/bot.py）long-polling daemon。
+  獨立 bot token（ASSISTANT_TELEGRAM_BOT_TOKEN / ASSISTANT_TELEGRAM_CHAT_ID），
+  跟 notify/bot.py 的通知/操作 bot 分開，見 assistant/CLAUDE.md。
+
+  安裝（把 /path/to/jp-pm-jobs 與 python3 路徑改成自己的）:
+    cp scripts/com.jp-pm-jobs.assistant-bot.plist.example \
+       ~/Library/LaunchAgents/com.jp-pm-jobs.assistant-bot.plist
+    （編輯路徑後）
+    launchctl load ~/Library/LaunchAgents/com.jp-pm-jobs.assistant-bot.plist
+  停用:
+    launchctl unload ~/Library/LaunchAgents/com.jp-pm-jobs.assistant-bot.plist
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.jp-pm-jobs.assistant-bot</string>
+
+    <!-- python3 直接進入（macOS TCC：python3 需有 ~/Documents 授權，見 launchd_shim.py 註解） -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/opt/homebrew/bin/python3</string>
+        <string>-m</string>
+        <string>assistant.bot</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/path/to/jp-pm-jobs</string>
+
+    <!-- 常駐：崩潰/網路斷線自動重啟 -->
+    <key>KeepAlive</key>
+    <true/>
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+
+    <key>StandardOutPath</key>
+    <string>/path/to/jp-pm-jobs/output/logs/assistant-bot.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/path/to/jp-pm-jobs/output/logs/assistant-bot.err.log</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+</dict>
+</plist>
