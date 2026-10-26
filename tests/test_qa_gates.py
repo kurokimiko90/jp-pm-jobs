@@ -246,3 +246,102 @@ def test_labels_match_between_gate_and_repair():
     assert "C01 経歴を教えてください" in labels
     assert "JD01 JD の問" in labels
     assert "DD01 深掘りの問" in labels
+
+
+# ------------------------------------------------------------ H 自己減点
+
+def test_self_undermining_flags_meta_talk_about_documents():
+    """実測 4441: 「経歴資料に記載がなく」「断定しません」が答えに出た。"""
+    items = [_labelled("JD02 声の分析", ["分析対象は経歴資料に記載がなく、断定しません。"])]
+    found = gates.self_undermining(items)
+    assert "経歴資料" in found["JD02 声の分析"]
+    assert "断定しません" in found["JD02 声の分析"]
+
+
+def test_self_undermining_flags_lack_in_first_sentence():
+    items = [_labelled("JD07 顧客調査", ["近い場面を話します。"],
+                       conclusion="顧客への直接ヒアリングを主導した具体例はなく、申し訳ありません。")]
+    assert "1文目で不足を宣言" in gates.self_undermining(items)["JD07 顧客調査"]
+
+
+def test_self_undermining_allows_one_honest_gap_inside_points():
+    """不足は要点の中で 1 回触れるのは正しい答え方 — 落とさない。"""
+    items = [_labelled("JD05 HR接続",
+                       ["HR 領域の直接経験はありませんが、予約 SaaS で業態ごとの要件を分けました。"],
+                       conclusion="業態ごとに違う要件を分けて仕様にした経験が一番近いです。")]
+    assert gates.self_undermining(items) == {}
+
+
+def test_self_undermining_is_blocking():
+    items = [_labelled("JD02 声の分析", ["求人情報上は詳細が分かりません。"])]
+    report = gates.run(items, MATERIAL, [])
+    assert "JD02 声の分析" in report.blocking
+
+
+# ------------------------------------------------------------ I 会社の数字
+
+def test_company_claims_flags_own_numbers_attributed_to_company():
+    """実測 4441: 自分の予約システムの「3 システム」を御社の構成として語った。"""
+    items = [_labelled("JD10 多要望",
+                       ["購入・管理・スケジューラーの 3 システムを持つ御社の SaaS でも確認します。"])]
+    job = "MIL株式会社 インタラクティブ動画 SaaS。導入社数 2,000 社。"
+    assert gates.company_claims(items, job) == {"JD10 多要望": ["3"]}
+
+
+def test_company_claims_passes_numbers_from_job_side():
+    items = [_labelled("JD11 導入", ["導入社数 2,000 社の御社の顧客基盤から学びます。"])]
+    assert gates.company_claims(items, "導入社数 2,000 社。") == {}
+
+
+def test_company_claims_ignores_sentences_without_company():
+    items = [_labelled("JD12 実績", ["現職では 8 ブランドを接続しました。"])]
+    assert gates.company_claims(items, "JD 本文") == {}
+
+
+# ------------------------------------------------------------ J 証拠の出所
+
+def test_personal_evidence_reports_only_above_share_limit():
+    names = ["LingoFlow", "jp-pm-jobs"]
+    few = [_labelled(f"JD{i:02d}", [f"業務の場面 {i}。"]) for i in range(9)]
+    few.append(_labelled("JD09 学習", ["LingoFlow で SRS を実装しました。"]))
+    assert gates.personal_evidence(few, names) == []
+    many = [_labelled(f"JD{i:02d}", ["jp-pm-jobs で分類しました。"]) for i in range(4)]
+    many += [_labelled("JD99", ["業務の場面。"])]
+    assert len(gates.personal_evidence(many, names)) == 4
+
+
+def test_personal_evidence_is_not_blocking():
+    items = [_labelled("JD01", ["LingoFlow で実装しました。"])]
+    report = gates.run(items, MATERIAL + "LingoFlow", [], project_names=["LingoFlow"])
+    assert report.personal_evidence == ["JD01"]
+    assert "JD01" not in report.blocking
+
+
+# ------------------------------------------------------------ 調整ずれの防止
+
+def test_keep_intent_reverts_tuning_that_answers_another_question():
+    """実測 4441: C05 キャリアビジョンが「強み」の答えに差し替わった。"""
+    base = [_core("C05", "今後のキャリアビジョンを教えてください", ["3 年で評価基盤。"],
+                  conclusion="3年後にLLM・エージェント系の品質設計と評価基盤を専門の軸にし、"
+                             "5年後にはGroup PMとして複数プロダクトの品質標準化を主導したいと考えています。")]
+    drifted = _core("C05", base[0].question, ["要点。"],
+                    conclusion="課題を整理し、技術と開発プロセスの両面からリリースまで進められる点です。")
+    kept, reverted = build._keep_intent(base, {"C05": drifted})
+    assert reverted == ["C05"] and kept[0] is base[0]
+
+
+def test_keep_intent_accepts_tuning_that_keeps_the_claim():
+    base = [_core("C05", "問", ["要点。"],
+                  conclusion="3年後にLLM・エージェント系の品質設計と評価基盤を専門の軸にし、"
+                             "5年後にはGroup PMとして複数プロダクトの品質標準化を主導したいと考えています。")]
+    tuned = _core("C05", "問", ["御社向けの要点。"],
+                  conclusion="3年後にAIプロダクトの品質と評価の設計を軸にし、"
+                             "5年後にはGroup PMとして複数プロダクトの標準化を主導したいです。")
+    kept, reverted = build._keep_intent(base, {"C05": tuned})
+    assert reverted == [] and kept[0] is tuned
+
+
+def test_strategy_rules_reach_every_generation_prompt():
+    """答え方の戦略は STYLE_RULES 経由で生成・修復・是正すべてに載る。"""
+    assert generate.ANSWER_STRATEGY_RULES in generate.STYLE_RULES
+    assert "経歴資料" in generate.ANSWER_STRATEGY_RULES

@@ -1,0 +1,5 @@
+# 面接 QA 生成で「本人の実践記録」として prompt に足すファイル（tools/knowledge_sources.py）
+# 缺檔 = 何も足さない。送出前に tools.redact が取引先ブランド名を遮蔽する。
+sources:
+  - label: 案件の振り返り（例）
+    path: ~/notes/project-retro.md

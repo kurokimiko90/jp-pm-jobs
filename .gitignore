@@ -48,6 +48,7 @@ config/resume.yaml
 config/redaction.yaml
 config/prep.yaml
 config/salary_answer.yaml
+config/knowledge.yaml
 data/candidate_profile.yaml
 data/candidate_profile_*.yaml
 data/cognitive_profile.yaml

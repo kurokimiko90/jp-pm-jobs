@@ -11,6 +11,11 @@
     付いているか（B と同じキーワード近似・報告のみで再生成しない）
   G 製品覆蓋 — JD・会社事実に登場する製品が最低 1 問で「関係・貢献・次にする
     こと」と結び付いているか（B・F と同じキーワード近似・報告のみで再生成しない）
+  H 自己減点 — 面接官の前で素材の話をする（「経歴資料に記載がなく」「断定しません」）
+    / 答えの 1 文目で不足を宣言する。零編造の縛りが口に出る答えへ漏れた型
+  I 会社の数字 — 「御社」を語る文の数字が求人側の素材（JD・会社事実）に在るか。
+    応募者自身の案件の数字を御社のこととして語る型（A は応募者素材でも通してしまう）
+  J 証拠の出所 — 個人開発を証拠にしている問の割合（報告のみ）
 
 F は「条件を満たすか」ではなく「面接官が求めている人物のタイプに見えるか」を
 見る軸で、B（MUST/WANT の逐条チェック）とは別の観点。求める人物像は条件を
@@ -78,6 +83,20 @@ WRITTEN_TERMS = ("当該", "上述", "下記", "寄与", "勘案", "帰属", "�
                  "面接では", "資料上では", "と答えます", "NG回答", "回答例")
 
 
+# H 用 — 面接官の前で素材・資料の話をする言い回し。面接では「資料」は存在しない
+META_TERMS = ("経歴資料", "職務経歴書に", "求人情報上", "求人情報では", "求人情報に",
+              "求人票では", "求人票に", "記載がなく", "記載がない", "記載はなく",
+              "記載がありません", "断定しません", "断定はしません", "断定できません",
+              "提示できません", "申し上げられません")
+# 「素材」「プロフィール」は入れない — 動画素材・会員プロフィール等の業務語と衝突する
+# H 用 — 1 文目（結論文）で不足を宣言している。不足は要点の中で 1 回だけ触れれば足りる
+_OPENING_LACK_RE = re.compile(
+    r"(?:経験|実績|具体例|事例)(?:は|が)?[^。]{0,10}?"
+    r"(?:ありません|ございません|なく|ないため|ない中|持っていません|提示できません)")
+# J — 個人開発の割合がこれを超えたら監査に出す（業務実績の方が面接では重い）
+PERSONAL_SHARE_LIMIT = 0.3
+
+
 @dataclass
 class GateReport:
     unsupported: dict[str, list[str]] = field(default_factory=dict)
@@ -97,6 +116,9 @@ class GateReport:
     uncovered_products: list[str] = field(default_factory=list)
     covered_products: int = 0
     total_products: int = 0
+    self_undermining: dict[str, list[str]] = field(default_factory=dict)
+    company_claims: dict[str, list[str]] = field(default_factory=dict)
+    personal_evidence: list[str] = field(default_factory=list)
 
     @property
     def blocking(self) -> list[str]:
@@ -105,7 +127,8 @@ class GateReport:
         return sorted(
             set(self.unsupported) | set(self.thin_points)
             | set(self.year_offenders) | set(self.overused_offenders)
-            | set(self.written_style)
+            | set(self.written_style) | set(self.self_undermining)
+            | set(self.company_claims)
         )
 
     @property
@@ -281,9 +304,63 @@ def oral_style(items: list[Labelled]) -> dict[str, list[str]]:
     return findings
 
 
+def self_undermining(items: list[Labelled]) -> dict[str, list[str]]:
+    """H 自己減点 — 素材の話をする言い回し / 1 文目での不足宣言がある問を返す。
+
+    `CONTENT_RULES` の零編造は「持っていない実績を作るな」であって、「持っていない
+    ことを面接官に宣言せよ」ではない。LLM は前者を後者へ読み替え、「〜の具体例は
+    現時点で提示できません」「経歴資料に記載がなく断定しません」と書く（実測 4441:
+    JD 特化 12 問中 3 問）。面接官はそこで評価を止める。
+    """
+
+    findings: dict[str, list[str]] = {}
+    for item in items:
+        hits = [term for term in META_TERMS if term in item.body]
+        if item.conclusion and _OPENING_LACK_RE.search(item.conclusion):
+            hits.append("1文目で不足を宣言")
+        if hits:
+            findings[item.label] = hits
+    return findings
+
+
+def company_claims(items: list[Labelled], job_material: str) -> dict[str, list[str]]:
+    """I 会社の数字 — 「御社」を語る文の数字が求人側の素材に無い問を返す。
+
+    A は応募者プロフィールまで素材に含むので、自分の案件の「3 システム」を
+    「3 システムを持つ御社の SaaS でも」と言い換えても通ってしまう（実測 4441）。
+    御社について言える数字は JD と会社事実に書かれているものだけ。
+    """
+
+    if not job_material:
+        return {}
+    findings: dict[str, list[str]] = {}
+    for item in items:
+        for sentence in re.split(r"(?<=[。！？])", item.body):
+            if "御社" not in sentence:
+                continue
+            numbers = unsupported_numbers(sentence, job_material)
+            if numbers:
+                findings.setdefault(item.label, []).extend(numbers)
+    return findings
+
+
+def personal_evidence(items: list[Labelled], project_names: list[str]) -> list[str]:
+    """J 証拠の出所 — 個人開発の名前を出している問。割合が上限以下なら空を返す。"""
+
+    if not project_names or not items:
+        return []
+    hits = [item.label for item in items
+            if any(name in item.body for name in project_names)]
+    if len(hits) <= len(items) * PERSONAL_SHARE_LIMIT:
+        return []
+    return hits
+
+
 def run(items: list[Labelled], material: str, requirements: list[str],
         persona_traits: list[str] | None = None,
-        product_names: list[str] | None = None) -> GateReport:
+        product_names: list[str] | None = None,
+        job_material: str = "",
+        project_names: list[str] | None = None) -> GateReport:
     unsupported, thin = fact_anchor(items, material)
     uncovered, covered = requirement_coverage(answers_text(items), requirements)
     year_findings, year_offenders = year_consistency(items)
@@ -312,6 +389,9 @@ def run(items: list[Labelled], material: str, requirements: list[str],
         uncovered_products=uncovered_products,
         covered_products=covered_products,
         total_products=len([p for p in product_names if _keywords(p)]),
+        self_undermining=self_undermining(items),
+        company_claims=company_claims(items, job_material),
+        personal_evidence=personal_evidence(items, project_names or []),
     )
 
 
@@ -329,6 +409,10 @@ def render_report(report: GateReport, total_questions: int) -> str:
         f"- 同じ型で締めている問: {len(report.template_endings)}",
         f"- 求める人物像 覆蓋: {report.covered_persona} / {report.total_persona}",
         f"- 製品 覆蓋: {report.covered_products} / {report.total_products}",
+        f"- 自己減点（素材の話・冒頭の不足宣言）が残る問: {len(report.self_undermining)}",
+        f"- 求人側の素材に無い数字で御社を語る問: {len(report.company_claims)}",
+        f"- 個人開発を証拠にしている問（上限 {int(PERSONAL_SHARE_LIMIT * 100)}% 超のときだけ列挙）:"
+        f" {len(report.personal_evidence)}",
         "",
         "> 覆蓋判定はキーワード一致による近似。挙がった要件は人が読んで確認する。",
         "> 一貫性検査は経験年数のみを対象とし、事実の食い違い全般は検出しない。",
@@ -361,6 +445,19 @@ def render_report(report: GateReport, total_questions: int) -> str:
         lines += [f"- {label}" for label in report.template_endings]
         lines += ["", "> どれを削るかは機械では決められない。読んで、"
                       "会社固有の接続が言えない問は最後の要点を落とす。", ""]
+    if report.self_undermining:
+        lines += ["## 自己減点が残っている回答", ""]
+        lines += [f"- {label}: {' / '.join(terms)}"
+                  for label, terms in report.self_undermining.items()] + [""]
+    if report.company_claims:
+        lines += ["## 求人側の素材に無い数字で御社を語っている回答", ""]
+        lines += [f"- {label}: {' / '.join(nums)}"
+                  for label, nums in report.company_claims.items()] + [""]
+    if report.personal_evidence:
+        lines += ["## 個人開発を証拠にしている問（多すぎる）", ""]
+        lines += [f"- {label}" for label in report.personal_evidence]
+        lines += ["", "> 事業・顧客・チームが絡む問は業務実績の方が重い。"
+                      "個人開発で答えている問のうち、業務の場面がある問は差し替えを検討する。", ""]
     if report.uncovered_requirements:
         lines += ["## QA が触れていない疑いのある JD 要件", ""]
         lines += [f"- {item}" for item in report.uncovered_requirements] + [""]

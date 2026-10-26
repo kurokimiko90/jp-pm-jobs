@@ -38,7 +38,7 @@ import json
 import re
 from dataclasses import dataclass, field
 
-from tools import miko_llm
+from . import llm as qa_llm
 
 from .render import Labelled
 
@@ -63,7 +63,8 @@ DEFAULT_CATEGORY_AXES: tuple[str, ...] = ("専門性",)
 
 AXIS_DESC: dict[str, str] = {
     "具体性":     "場面が浮かぶか。誰が・何を判断し・どうなったかが言えているか",
-    "質問応答":   "聞かれたことに答えているか。言いたいことを言っているだけになっていないか",
+    "質問応答":   "聞かれたことに答えているか。言いたいことを言っているだけになっていないか。"
+                  "冒頭で自分の不足や「資料に記載がない」等を述べて逃げていないか",
     "定着可能性": "この会社で長く働く動機があるか。事業内容への興味、未経験領域への学習姿勢"
                   "（「◎◎は勉強中です」型の具体例）、なりたい自分と現状のギャップを埋める発言があるか",
     "戦力化スピード": "5年後に中核人材として活躍できる根拠があるか。今すぐ貢献できることと"
@@ -81,14 +82,20 @@ TARGET_SCORE = 90
 # 1 巡で書き直す上限。gates.MAX_REPAIR_TARGETS と同じ思想 — 長さが暴れないよう蓋をする。
 # 90 点は厳しく、不合格の問が多く出うるため 5 の元の値より広めに取る。
 MAX_FINDINGS = 24
-# 批評 → 是正の最大巡回数。1 巡 = LLM 2 call（批評 + 是正）
-MAX_ROUNDS = 5
+# 批評 → 是正の最大巡回数。1 巡 = 是正 1 call + 書き直した問だけの再採点
+# （REVIEW_BATCH 問ごとに 1 call）
+MAX_ROUNDS = 3
+# 1 回の採点呼び出しに載せる問数。80 問を 1 call で採点させると出力 JSON が途中で
+# 切れ、書かれなかった問が 0 点になる（実測 4441: v1 平均 77 → v2 平均 12。
+# 書き直しは効いていたのに「悪化」と判定されて全部捨てられた）
+REVIEW_BATCH = 20
 # 対象問の合計点が「悪化も改善もしていない」巡がこの回数続いたら打ち切る
 STALL_ROUNDS = 2
 
 _FENCE_RE = re.compile(r"```(?:json)?\s*(.+?)```", re.S)
 _OBJECT_RE = re.compile(r"\{.*\}", re.S)
 # 引用照合の正規化 — 空白・引用符・読点の揺れは無視する（LLM は必ず揺らす）
+_LABEL_ID_RE = re.compile(r"^((?:C|JD|DD)\d+)(?:\s|$)")
 _NOISE_RE = re.compile(r"[\s　「」『』\"'、,。.・…]")
 
 
@@ -133,6 +140,12 @@ class ItemScore:
     @property
     def passed(self) -> bool:
         return self.total >= TARGET_SCORE
+
+    @property
+    def scored(self) -> bool:
+        """LLM の出力にこの問の採点があったか。無ければ 0 点のまま。"""
+
+        return bool(self.scores)
 
 
 @dataclass(frozen=True)
@@ -179,6 +192,22 @@ def _norm(text: str) -> str:
     return _NOISE_RE.sub("", text)
 
 
+def _resolve_label(label: str, known: dict[str, "ItemScore"]) -> str | None:
+    """LLM が写したラベル → 実在のラベル。完全一致 → 先頭 ID（C36 / JD03 / DD12）の一致。
+
+    LLM は長いラベルの末尾を削ったり空白を詰めたりする。ID は一意なのでそこで
+    引き当てる。ID の無いラベルは推測しない（作り話の問を採点扱いにしない）。
+    """
+
+    if label in known:
+        return label
+    match = _LABEL_ID_RE.match(label)
+    if not match:
+        return None
+    hits = [key for key in known if key.split(" ", 1)[0] == match.group(1)]
+    return hits[0] if len(hits) == 1 else None
+
+
 # ── 批評の解析と検証 ─────────────────────────────────
 
 
@@ -210,8 +239,8 @@ def parse(raw: str, items: list[Labelled]) -> tuple[dict[str, ItemScore], list[d
         for entry in raw_items:
             if not isinstance(entry, dict):
                 continue
-            label = str(entry.get("label") or "").strip()
-            base = scores.get(label)
+            label = _resolve_label(str(entry.get("label") or "").strip(), scores)
+            base = scores.get(label) if label else None
             if base is None:
                 continue  # ラベルが照合できない出力は捨てる（作り話の問を採点扱いしない）
             raw_scores = entry.get("scores")
@@ -341,8 +370,38 @@ def _listing(items: list[Labelled]) -> str:
     return "\n\n".join(blocks)
 
 
-def review(context: str, items: list[Labelled]) -> Critique | None:
-    """想定問答を面接官の目で、問ごとにその分類の軸で採点する（LLM 1 call）。失敗したら None。
+def _review_batch(context: str, items: list[Labelled]
+                  ) -> tuple[dict[str, ItemScore], list[Finding], int] | None:
+    """1 回の呼び出しで採点する。1 問も採点が返らなければ 1 回だけ投げ直す。"""
+
+    prompt = _PROMPT.format(
+        axis_glossary=_axis_glossary(),
+        max_findings=min(MAX_FINDINGS, len(items)),
+        context=context,
+        total=len(items),
+        listing=_listing(items),
+    )
+    accept = {"includesAll": ["items"], "minChars": 120}
+    for _attempt in range(2):
+        try:
+            raw = qa_llm.text(prompt, timeout=600, accept=accept)
+        except Exception:
+            continue
+        scores, raw_findings = parse(raw, items)
+        if any(score.scored for score in scores.values()):
+            findings, dropped = verify(raw_findings, items)
+            return scores, findings, dropped
+    return None
+
+
+def review(context: str, items: list[Labelled],
+           previous: "Critique | None" = None,
+           only: list[str] | None = None) -> Critique | None:
+    """想定問答を面接官の目で、問ごとにその分類の軸で採点する。失敗したら None。
+
+    `REVIEW_BATCH` 問ずつ分けて呼ぶ（1 call に全問を載せると出力が切れる）。
+    `only` を渡すと、その問だけを採点し直し、残りは `previous` の採点と指摘を
+    引き継ぐ — 書き直していない問を毎巡採点し直す必要は無く、採点のブレも拾わない。
 
     None は「批評できなかった」であって「合格」ではない。呼び出し側は迭代を
     打ち切るだけで、通過したことにしてはいけない。
@@ -350,23 +409,48 @@ def review(context: str, items: list[Labelled]) -> Critique | None:
 
     if not items:
         return None
-    prompt = _PROMPT.format(
-        axis_glossary=_axis_glossary(),
-        max_findings=MAX_FINDINGS,
-        context=context,
-        total=len(items),
-        listing=_listing(items),
-    )
-    accept = {"includesAll": ["items"], "minChars": 120}
-    try:
-        raw = miko_llm.text(prompt, timeout=600, opts={"accept": accept})
-    except Exception:
+    targets = [item for item in items if only is None or item.label in set(only)]
+    if not targets:
+        return previous
+
+    scores: dict[str, ItemScore] = {}
+    findings: list[Finding] = []
+    dropped = 0
+    reviewed_any = False
+    for start in range(0, len(targets), REVIEW_BATCH):
+        batch = targets[start:start + REVIEW_BATCH]
+        result = _review_batch(context, batch)
+        if result is None:
+            # この塊は採点できなかった — 0 点で埋める（合格扱いにしない）
+            scores.update({item.label: ItemScore(item.label, item.category, {})
+                           for item in batch})
+            continue
+        reviewed_any = True
+        batch_scores, batch_findings, batch_dropped = result
+        # 一部の問だけ書き落とされた — その問だけ 1 回投げ直す（0 点のまま不合格へ回さない）
+        missing = [item for item in batch if not batch_scores[item.label].scored]
+        retry = _review_batch(context, missing) if missing else None
+        if retry is not None:
+            batch_scores = {**batch_scores, **retry[0]}
+            batch_findings = batch_findings + retry[1]
+            batch_dropped += retry[2]
+        scores.update(batch_scores)
+        findings += batch_findings
+        dropped += batch_dropped
+    if not reviewed_any:
         return None
-    scores, raw_findings = parse(raw, items)
-    if not scores:
-        return None
-    findings, dropped = verify(raw_findings, items)
-    return Critique(items=scores, findings=findings, dropped=dropped)
+
+    if previous is not None and only is not None:
+        rescored = {item.label for item in targets}
+        for label, score in previous.items.items():
+            scores.setdefault(label, score)
+        findings += [f for f in previous.findings if f.label not in rescored]
+
+    # 指摘は点の低い問から優先して残す（是正 1 回で直せる量に蓋をする）
+    rank = {label: score.total for label, score in scores.items()}
+    findings = sorted(findings, key=lambda f: rank.get(f.label, 0))[:MAX_FINDINGS]
+    ordered = {item.label: scores[item.label] for item in items if item.label in scores}
+    return Critique(items=ordered, findings=findings, dropped=dropped)
 
 
 # ── 監査レポート ────────────────────────────────────
@@ -401,6 +485,10 @@ def render_report(history: list[Critique], adopted: int | None = None) -> str:
     if not chosen.passed:
         lines += ["### 合格線に届いていない問", ""]
         for item in chosen.failing:
+            if not item.scored:
+                # 0 点と書くと「最悪の答え」に見える。実際は採点が返らなかっただけ
+                lines.append(f"- **{item.label}** — 採点なし（LLM の出力に無く、投げ直しでも返らなかった）")
+                continue
             axes_display = ", ".join(f"{a}={item.scores.get(a, 0)}" for a in item.axes)
             lines.append(f"- **{item.label}** — {item.total} 点（{axes_display}）")
         lines.append("")

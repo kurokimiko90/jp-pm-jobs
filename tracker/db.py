@@ -727,6 +727,17 @@ def _inherit_into_starred(conn: sqlite3.Connection, keep_id: int, loser_ids: lis
     print(f"  [dedup_fuzzy] 星付き#{keep_id} に引き継ぎ: {', '.join(updates)}")
 
 
+# jobs(id) を参照し、job_id に一意制約が無い子表（dedup_fuzzy で無条件に付け替える）
+_FREE_CHILD_TABLES = ("followups", "inbox_mails", "salary_replies")
+
+
+def _job_ids_in(conn: sqlite3.Connection, table: str) -> set[int]:
+    try:
+        return {r["job_id"] for r in conn.execute(f"SELECT job_id FROM {table}").fetchall()}
+    except sqlite3.OperationalError:
+        return set()  # 表が未作成
+
+
 def dedup_fuzzy(dry_run: bool = False) -> list[dict]:
     """全庫跨來源模糊去重：同正規化公司 + 標題相似度 ≥ 門檻 → 視為同職缺。
 
@@ -764,10 +775,13 @@ def dedup_fuzzy(dry_run: bool = False) -> list[dict]:
         has_direct = {
             r["job_id"] for r in conn.execute("SELECT job_id FROM direct_apply").fetchall()
         }
+        # apply_waves も UNIQUE(job_id)。両方にあれば消さない（direct_apply と同じ扱い）。
+        has_wave = _job_ids_in(conn, "apply_waves")
 
         to_delete: list[int] = []
         app_migrations: list[tuple[int, int]] = []  # (from_job_id, to_job_id)
         direct_migrations: list[tuple[int, int]] = []  # (from_job_id, to_job_id)
+        wave_migrations: list[tuple[int, int]] = []  # (from_job_id, to_job_id)
         starred_inherits: list[tuple[int, list[int]]] = []  # (keep_id, [消す側 id])
         for g in groups:
             rows = conn.execute(
@@ -803,22 +817,29 @@ def dedup_fuzzy(dry_run: bool = False) -> list[dict]:
                 keep = max(cl, key=_keep_rank)
                 keep_has_app = keep["id"] in has_app
                 keep_has_direct = keep["id"] in has_direct
+                keep_has_wave = keep["id"] in has_wave
                 cluster_deleted: list[int] = []
                 for j in cl:
                     if j["id"] == keep["id"]:
                         continue
+                    # 一意制約のある子表で衝突するなら、移行計画を積む前に保守保留
+                    # （先に app 移行だけ積んで continue すると、消さない行の投遞を動かしてしまう）
+                    if (j["id"] in has_app and keep_has_app) \
+                            or (j["id"] in has_direct and keep_has_direct) \
+                            or (j["id"] in has_wave and keep_has_wave):
+                        continue
                     migrated = False
                     if j["id"] in has_app:
-                        if keep_has_app:
-                            continue  # 兩筆都有投遞，保守保留，不刪
                         app_migrations.append((j["id"], keep["id"]))
                         keep_has_app = True
                         migrated = True
                     if j["id"] in has_direct:
-                        if keep_has_direct:
-                            continue  # 兩筆都有官網直投包，保守保留，不刪
                         direct_migrations.append((j["id"], keep["id"]))
                         keep_has_direct = True
+                        migrated = True
+                    if j["id"] in has_wave:
+                        wave_migrations.append((j["id"], keep["id"]))
+                        keep_has_wave = True
                         migrated = True
                     to_delete.append(j["id"])
                     cluster_deleted.append(j["id"])
@@ -856,6 +877,22 @@ def dedup_fuzzy(dry_run: bool = False) -> list[dict]:
                 )
             if direct_migrations:
                 print(f"[dedup_fuzzy] 遷移 {len(direct_migrations)} 筆官網直投包至完整版")
+            for from_id, to_id in wave_migrations:
+                conn.execute(
+                    "UPDATE apply_waves SET job_id = ? WHERE job_id = ?", (to_id, from_id)
+                )
+            # 一意制約の無い子表（followups / inbox_mails / salary_replies）は
+            # 消す行を指していれば無条件で keep へ付け替える。漏れると DELETE が
+            # FOREIGN KEY constraint failed で落ち、後処理全体が止まる。
+            for from_id in to_delete:
+                to_id = next(p["keep_id"] for p in plan if p["id"] == from_id)
+                for table in _FREE_CHILD_TABLES:
+                    try:
+                        conn.execute(
+                            f"UPDATE {table} SET job_id = ? WHERE job_id = ?", (to_id, from_id)
+                        )
+                    except sqlite3.OperationalError:
+                        pass  # 表が未作成（該当機能を一度も動かしていない DB）
             if to_delete:
                 conn.execute(
                     f"DELETE FROM jobs WHERE id IN ({','.join('?' * len(to_delete))})",

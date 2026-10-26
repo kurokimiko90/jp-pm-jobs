@@ -57,11 +57,29 @@ EXPIRED_REDIRECTS = ["/recommend", "/error", "/expired"]
 LOGIN_SIGNALS = ["OIDCLogin", "/login"]
 
 
+def _ensure_page(port: int) -> None:
+    """タブが 1 枚もない Chrome（macOS はウィンドウを閉じてもプロセスが残る）は
+    connect_over_cdp が "Browser context management is not supported" で落ちるので、
+    CDP の HTTP エンドポイントでタブを 1 枚開いておく。"""
+    import urllib.request
+
+    base = f"http://127.0.0.1:{port}/json"
+    with urllib.request.urlopen(f"{base}/list", timeout=5) as r:
+        targets = json.load(r)
+    if any(t.get("type") == "page" for t in targets):
+        return
+    print("  タブが無いので 1 枚開く", file=sys.stderr)
+    req = urllib.request.Request(f"{base}/new?{LANDING_URL}", method="PUT")
+    urllib.request.urlopen(req, timeout=10).close()
+    time.sleep(2)
+
+
 def _ensure_cdp(port: int, profile_dir: str) -> subprocess.Popen | None:
     """重用既有 CDP 或啟動新的。回傳 Popen（新啟）或 None（重用）。"""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         if s.connect_ex(("127.0.0.1", port)) == 0:
             print(f"  既存 Chrome 再利用 (port={port})", file=sys.stderr)
+            _ensure_page(port)
             return None
     print(f"  Chrome 起動中 (port={port}, profile={profile_dir})...", file=sys.stderr)
     cmd = [

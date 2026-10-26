@@ -27,7 +27,8 @@ def _job() -> dict:
 def test_context_wraps_every_source_in_tags():
     """素材は必ずタグの中。Markdown 見出しだと JD 原文の `##` と同階層に並ぶ。"""
     text = context.build(_job(), facts="調査済みの事実", with_profile=True)
-    assert text.count("<素材") == text.count("</素材>") == 4
+    expected = 5 if context.knowledge_text() else 4  # 実践記録は knowledge.yaml がある時だけ
+    assert text.count("<素材") == text.count("</素材>") == expected
     # タグの外に素材が漏れていないか（先頭がタグで始まる）
     assert text.lstrip().startswith("<素材")
 

@@ -77,3 +77,17 @@ def test_jd_text_drops_unrelated_fields_when_sections_match():
     assert "SaaS開発の経験。" in out
     assert "受動喫煙対策" not in out
     assert "東京都" not in out
+
+
+def test_knowledge_block_enters_context_and_evidence(monkeypatch):
+    """基礎知識庫（config/knowledge.yaml）が提案の文脈と数字錨定の素材に入る。"""
+    monkeypatch.setattr(context, "knowledge_block",
+                        lambda max_chars_per_source=None: "# 実践記録\n離脱率を 12% 改善\n")
+    monkeypatch.setattr(context, "profile_text", lambda compact=True: "positioning: PM")
+    monkeypatch.setattr(context, "core_answers", lambda: "")
+    monkeypatch.setattr(context, "gap_block", lambda job: "")
+    job = {"title": "PM", "raw_jd": "**仕事内容**\n要件定義\n"}
+
+    assert "離脱率を 12% 改善" in context.build(job)
+    assert "離脱率を 12% 改善" not in context.build(job, with_profile=False)
+    assert "離脱率を 12% 改善" in context.evidence_corpus(job)

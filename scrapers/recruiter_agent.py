@@ -119,6 +119,18 @@ def _extract_html(html: str) -> tuple[str, list[str]]:
     return parser.text, parser.hrefs
 
 
+# 「応募リクエスト」メールは `▼株式会社X / ◆職種 / ▼求人票URL / https://…` の形で、
+# URL の見出しにも ▼ が付く。そのまま ▼ で割ると URL を持つ側のブロックの見出しが
+# 「求人票URL」になり、会社名・職種名が「求人票URL」の row ができる（実測 2 件、
+# 別求人どうしが同一会社扱いされて dedup_fuzzy が誤って統合しようとした）。
+# 割る前にラベル見出しの ▼ を外して、URL を直前の求人ブロックへ戻す。
+_LABEL_HEADING_RE = re.compile(r"▼(\s*(?:求人票|求人|ご紹介)\s*URL)")
+
+
+def _fold_label_headings(text: str) -> str:
+    return _LABEL_HEADING_RE.sub(r"\1", text)
+
+
 def _parse_plain_block(block: str) -> dict | None:
     """Parse a ▼ block from plain-text 求人一覧."""
     lines = [l.strip() for l in block.strip().splitlines() if l.strip()]
@@ -128,6 +140,10 @@ def _parse_plain_block(block: str) -> dict | None:
     header = _norm(lines[0].lstrip("▼").strip())
     company = header.split("/")[0].strip() if "/" in header else header
     title = "/".join(header.split("/")[1:]).strip() if "/" in header else ""
+    # 応募リクエスト形式：見出しは社名だけで、職種は次行の「◆…」
+    if not title and len(lines) > 1 and lines[1].startswith("◆"):
+        title = _norm(lines[1].lstrip("◆").strip())
+        lines = [lines[0]] + lines[2:]
 
     salary_raw = ""
     location = ""
@@ -177,7 +193,7 @@ def _parse_html_jobs(html: str) -> list[dict]:
     Strategy: split HTML at ▼, then within each chunk find the joboffers URL.
     This keeps URL-to-block association correct.
     """
-    html_n = unicodedata.normalize("NFKC", html)
+    html_n = _fold_label_headings(unicodedata.normalize("NFKC", html))
     chunks = re.split(r"▼", html_n)
     results = []
     seen: set[str] = set()
@@ -318,7 +334,7 @@ def fetch_from_gmail(days: int = 7, max_results: int = 50) -> list[dict]:
         jobs: list[dict] = []
 
         if text_body and "▼" in text_body:
-            blocks = re.split(r"▼", text_body)
+            blocks = re.split(r"▼", _fold_label_headings(text_body))
             for block in blocks[1:]:
                 job = _parse_plain_block("▼" + block)
                 if job:

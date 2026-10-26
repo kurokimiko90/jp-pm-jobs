@@ -100,10 +100,12 @@ def render(company: str, core: list[CoreAnswer], jd_items: list[QA],
 def label_of(item: CoreAnswer | QA, origin: str, index: int = 0) -> str:
     """人が読んで場所が分かるラベル。build 側の再生成もこの規則で引き当てる。"""
 
+    # rstrip: 空白で切れたラベルは、LLM が strip して返したラベルと一致しない
+    # （実測 6094: C36 の採点が照合できず全軸 0 点）
     if origin == "core":
-        return f"{item.qid} {item.question[:24]}"  # type: ignore[union-attr]
+        return f"{item.qid} {item.question[:24]}".rstrip()  # type: ignore[union-attr]
     prefix = "JD" if origin == "jd" else "DD"
-    return f"{prefix}{index:02d} {item.question[:24]}"
+    return f"{prefix}{index:02d} {item.question[:24]}".rstrip()
 
 
 def labelled(core: list[CoreAnswer], jd_items: list[QA],

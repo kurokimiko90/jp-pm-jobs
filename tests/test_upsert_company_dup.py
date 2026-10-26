@@ -147,3 +147,41 @@ def test_dedup_fuzzy_protects_starred_marked_by_backfill(tmp_db):
         rows = conn.execute("SELECT id, raw_jd FROM jobs").fetchall()
     assert [r["id"] for r in rows] == [starred_id]
     assert len(rows[0]["raw_jd"]) > 100
+
+
+def test_dedup_fuzzy_repoints_inbox_mails_before_delete(tmp_db):
+    """消す側を inbox_mails が指していても FK で落ちず、keep へ付け替えて消す。"""
+    long_id, _ = tmp_db.upsert_job(_job("green", "g-1"))
+    short_id, _ = tmp_db.upsert_job(_job("indeed_jp", "i-1"), allow_company_dup=True)
+    with tmp_db.connect() as conn:
+        conn.execute("UPDATE jobs SET raw_jd = ? WHERE id = ?", ("長い JD " * 100, long_id))
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS inbox_mails (id INTEGER PRIMARY KEY, "
+            "gmail_msg_id TEXT NOT NULL UNIQUE, job_id INTEGER REFERENCES jobs(id))"
+        )
+        conn.execute("INSERT INTO inbox_mails (gmail_msg_id, job_id) VALUES ('m1', ?)", (short_id,))
+
+    plan = tmp_db.dedup_fuzzy()
+
+    assert [p["id"] for p in plan] == [short_id]
+    with tmp_db.connect() as conn:
+        assert conn.execute("SELECT job_id FROM inbox_mails").fetchone()["job_id"] == long_id
+        assert conn.execute("SELECT COUNT(*) c FROM jobs").fetchone()["c"] == 1
+
+
+def test_dedup_fuzzy_skips_without_moving_app_when_direct_conflicts(tmp_db):
+    """direct_apply が両方にある簇では、投遞記錄も動かさず保留する。"""
+    keep_id, _ = tmp_db.upsert_job(_job("green", "g-1"))
+    other_id, _ = tmp_db.upsert_job(_job("indeed_jp", "i-1"), allow_company_dup=True)
+    with tmp_db.connect() as conn:
+        conn.execute("UPDATE jobs SET raw_jd = ? WHERE id = ?", ("長い JD " * 100, keep_id))
+        for jid in (keep_id, other_id):
+            conn.execute("INSERT INTO direct_apply (job_id) VALUES (?)", (jid,))
+        conn.execute(
+            "INSERT INTO applications (job_id, status, applied_at, last_updated) VALUES (?, 'applied', '2026-10-01', '2026-10-01')",
+            (other_id,),
+        )
+
+    assert tmp_db.dedup_fuzzy() == []
+    with tmp_db.connect() as conn:
+        assert conn.execute("SELECT job_id FROM applications").fetchone()["job_id"] == other_id

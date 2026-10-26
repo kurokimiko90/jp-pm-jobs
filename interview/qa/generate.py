@@ -10,11 +10,15 @@ from __future__ import annotations
 
 import re
 
-from tools import miko_llm
+from . import llm as qa_llm
 
 from . import keywords
 from .bank import POINT_RE, CoreAnswer
 from .render import QA
+
+# 長い生成の待ち時間。文脈込みで 3〜4 万字の prompt は brain 総当たりで 10 分を
+# 超えることがある（2026-09-07 実測 12 分）。600 秒だと返答直前に打ち切っていた
+LONG_TIMEOUT = 1200
 
 _BLOCK_RE = re.compile(r"^###\s+(?:Q\.|(C\d+)\.)\s*(.+?)\s*$", re.MULTILINE)
 
@@ -51,6 +55,25 @@ CONTENT_RULES = """\
   ような解説目線は禁止。「貴社」ではなく「御社」。
 """
 
+# 実測 4441（10/13 版）で面接官の評価を止める答えが 3 型出た。どれも閘門 H/I が
+# 機械で拾うが、生成時点で書かせないのが一番安い。
+ANSWER_STRATEGY_RULES = """\
+答え方の戦略（厳守）:
+- 書く前に「面接官がこの問で本当に確かめたいこと」を 1 つ決め、1 文目はそれに
+  正面から答える。例: キャリアビジョンを聞かれたら将来像を答える（強みを答えない）。
+- 経験が足りない領域を聞かれたときは、1 文目で不足を宣言しない。
+  「一番近い実務の場面 → そこで使った判断がこの仕事へ移る理由 → 入社後に最初に
+  やること」の順で答え、不足は要点の中で「〜の直接経験はありませんが」と 1 回だけ
+  触れる。ごまかさないが、自分から評価を下げにいかない。
+- 面接官の前で資料の話をしない。「経歴資料に記載がなく」「求人情報上は」「断定しません」
+  「提示できません」は禁止。知らないことは「〜と理解しています。入社後に〜で確かめます」と言う。
+- 御社の事業・製品・体制について言ってよいのは、JD と会社事実に書かれていることだけ。
+  自分の過去案件の構成や数字を御社のこととして語らない。
+- 証拠の選び方: 事業・顧客・関係者・チームが絡む問は、現職・前職の業務実績と
+  「応募者本人の実践記録」の場面を優先する（実践記録は判断と代償まで書かれた一次素材）。
+  個人開発は、AI の実装力・自走力を問う問か、業務に該当する場面が無い問でだけ使う。
+"""
+
 STYLE_RULES = f"""\
 形式（厳守）:
 - 各問は「### Q. 質問文」の見出し 1 行 → 答えの芯を 1 文 → 「1. 」「2. 」「3. 」の要点。
@@ -58,7 +81,8 @@ STYLE_RULES = f"""\
 - 1 文目は「結論として」「結論から言うと」「まず」などの前置きを置かず、答えから入る。
 
 {POINT_STRUCTURE_RULES}
-{CONTENT_RULES}"""
+{CONTENT_RULES}
+{ANSWER_STRATEGY_RULES}"""
 
 # 指揮中心の accept は「形式」だけを見る。用語の禁止をここへ入れてはいけない —
 # 十数問の一括出力では 1 語の違反で全体が差し戻され、brain 総当たりの末に
@@ -179,7 +203,7 @@ def persona_traits(review_context: str) -> list[str]:
 """
     accept = {"regex": r"^- ", "regexFlags": "m", "minChars": 30}
     try:
-        result = miko_llm.text(prompt, timeout=300, opts={"accept": accept})
+        result = qa_llm.text(prompt, timeout=300, accept=accept)
     except Exception:
         return []
     traits = [line.strip()[2:].strip() for line in result.splitlines()
@@ -217,7 +241,7 @@ def product_relationships(review_context: str) -> list[str]:
 """
     accept = {"regex": r"^- ", "regexFlags": "m", "minChars": 3}
     try:
-        result = miko_llm.text(prompt, timeout=300, opts={"accept": accept})
+        result = qa_llm.text(prompt, timeout=300, accept=accept)
     except Exception:
         return []
     names = [line.strip()[2:].strip() for line in result.splitlines()
@@ -242,7 +266,9 @@ def tune_core(context: str, targets: list[CoreAnswer]) -> dict[str, CoreAnswer]:
   書き換えるかは質問ごとに最も自然な位置を選ぶ）。文脈の「求める人物像」に合う
   実績が既にこの問にあるなら、そこへ繋げる書き換えを優先する。
 - 全問を同じ型で締めない。「御社でも〜したいです」で終わる問は全体の半分以下にする。
-- 結論文は、この会社に対する答えとして自然になるよう必要なら整える。
+- 結論文は、この会社に対する答えとして自然になるよう必要なら整えるが、**何に答えて
+  いるか（主張そのもの）は変えない**。キャリアビジョンの問を強みの答えに変える、
+  のような差し替えは禁止。
 - 質問文は一字一句変えない。見出しは `### C01.` の形式のまま返す。
 
 {STYLE_RULES}
@@ -256,7 +282,7 @@ def tune_core(context: str, targets: list[CoreAnswer]) -> dict[str, CoreAnswer]:
 調整後の全 {len(targets)} 問を `### C番号. 質問文` の見出しで、結論と要点だけ出力する。
 """
     accept = dict(_ACCEPT_BASE, minChars=max(600, 200 * len(targets)))
-    result = miko_llm.text(prompt, timeout=600, opts={"accept": accept})
+    result = qa_llm.text(prompt, timeout=LONG_TIMEOUT, accept=accept)
 
     by_qid = {a.qid: a for a in targets}
     tuned: dict[str, CoreAnswer] = {}
@@ -308,7 +334,7 @@ def jd_specific(context: str, avoid_questions: list[str] | None = None,
 {count} 問を `### Q. [キーワード] 質問文` の見出しで、結論と要点だけ出力する。
 """
     accept = dict(_ACCEPT_BASE, minChars=1800)
-    result = miko_llm.text(prompt, timeout=600, opts={"accept": accept})
+    result = qa_llm.text(prompt, timeout=LONG_TIMEOUT, accept=accept)
     return [_qa(k, q, c, p, "jd") for _, k, q, c, p in _parse(result)]
 
 
@@ -338,7 +364,7 @@ def drilldown(context: str, targets: list[QA | CoreAnswer], per: int = 2) -> lis
 追問を `### Q. [キーワード] 質問文` の見出しで、結論と要点だけ出力する。元の回答は再掲しない。
 """
     accept = dict(_ACCEPT_BASE, minChars=1200)
-    result = miko_llm.text(prompt, timeout=600, opts={"accept": accept})
+    result = qa_llm.text(prompt, timeout=LONG_TIMEOUT, accept=accept)
     return [_qa(k, q, c, p, "drilldown") for _, k, q, c, p in _parse(result)]
 
 
@@ -374,7 +400,7 @@ def drilldown_second(context: str, first: list[QA], picks: int = 4) -> list[QA]:
 2 段目の追問を `### Q. [キーワード] 質問文` の見出しで、結論と要点だけ出力する。1 段目は再掲しない。
 """
     accept = dict(_ACCEPT_BASE, minChars=600)
-    result = miko_llm.text(prompt, timeout=600, opts={"accept": accept})
+    result = qa_llm.text(prompt, timeout=LONG_TIMEOUT, accept=accept)
     return [_qa(k, q, c, p, "drilldown") for _, k, q, c, p in _parse(result)]
 
 
@@ -400,6 +426,10 @@ def repair_batch(context: str, problems: list[tuple[str, str, list[str], str]],
 直し方:
 - 質問文は一字一句変えない。見出しはそのまま `### Q. 質問文` で返す。
 - 素材に無い数字を指摘された問は、その数字を落とすか、素材にある数字へ置き換える。
+- 自己減点を指摘された問は、資料の話・冒頭の不足宣言を消し、「答え方の戦略」の
+  順（近い実務の場面 → 移る理由 → 入社後最初にやること）で組み直す。
+- 御社の数字を指摘された問は、その数字を御社の話から外す（自分の案件の話として
+  言うか、落とす）。
 - 実績の使い回しを指摘された問は、素材の中からまだ使っていない場面へ差し替える。
 - 年数の食い違いを指摘された問は、素材にある値へそろえる。
 - 抽象論だけと指摘された問は、実際にあった一場面へ書き直す。
@@ -418,7 +448,7 @@ def repair_batch(context: str, problems: list[tuple[str, str, list[str], str]],
 """
     accept = dict(_ACCEPT_BASE, minChars=max(200, 120 * len(problems)))
     try:
-        result = miko_llm.text(prompt, timeout=600, opts={"accept": accept})
+        result = qa_llm.text(prompt, timeout=LONG_TIMEOUT, accept=accept)
     except Exception:
         return {}
     fixed: dict[str, QA] = {}
@@ -476,7 +506,7 @@ def refine_batch(context: str, targets: list[tuple[str, str, str, list[str], str
 """
     accept = dict(_ACCEPT_BASE, minChars=max(200, 120 * len(targets)))
     try:
-        result = miko_llm.text(prompt, timeout=600, opts={"accept": accept})
+        result = qa_llm.text(prompt, timeout=LONG_TIMEOUT, accept=accept)
     except Exception:
         return {}
     refined: dict[str, QA] = {}

@@ -25,7 +25,8 @@ LOGIN_INDICATORS = ("/login", "/uas/login", "/checkpoint")
 # LinkedIn 每頁滿量 25 筆；未滿一頁即代表沒有下一頁。
 _PAGE_SIZE = 25
 _CARD_SELECTOR = (
-    "div.job-card-container, li[data-occludable-job-id], a.job-card-container__link"
+    "div.job-card-container, li[data-occludable-job-id], a.job-card-container__link, "
+    "div[componentkey^='job-card-component-ref-']"
 )
 
 def _fetch_jd_detail(page: Page, url: str) -> tuple[str, str]:
@@ -39,7 +40,9 @@ def _fetch_jd_detail(page: Page, url: str) -> tuple[str, str]:
     result = page.evaluate(r"""() => {
         // force-expand all "show more" buttons via dispatchEvent
         document.querySelectorAll('button').forEach(b => {
-            if (/more|show|展開|詳細/i.test(b.innerText)) {
+            // 2026-10 新 UI は「Show all」等の遷移ボタンも /show/ に当たり、押すと詳細頁を離れて
+            // 次の evaluate が Execution context destroyed になる → 展開ボタンの文言だけに絞る
+            if (/^(…\s*)?(see |show )?more$|もっと見る|展開/i.test(b.innerText.trim())) {
                 try {
                     b.dispatchEvent(new MouseEvent('click', {bubbles: true}));
                 } catch(e) {}
@@ -52,14 +55,29 @@ def _fetch_jd_detail(page: Page, url: str) -> tuple[str, str]:
         return null;
     }""")
     polite_sleep(1, 2)
-    result = page.evaluate(r"""() => {
+    try:
+        result = _read_jd(page)
+    except Exception as e:
+        # 展開クリックが遷移を起こした場合など：元の詳細頁へ戻して 1 回だけ読み直す
+        print(f"    [detail] 読み取り失敗 {type(e).__name__}，再読込: {url[:80]}")
+        try:
+            page.goto(url, wait_until="domcontentloaded", timeout=30000)
+            polite_sleep(2, 3)
+            result = _read_jd(page)
+        except Exception as e2:
+            print(f"    [detail] 再読込も失敗 {type(e2).__name__}: {url[:80]}")
+            return "", ""
+    return result.get("jd", ""), result.get("salary", "")
+
+
+def _read_jd(page: Page) -> dict:
+    return page.evaluate(r"""() => {
         const box = document.querySelector('[data-testid="expandable-text-box"]');
         const jd = box ? box.innerText.trim() : '';
         const pageText = document.body.innerText;
         const salMatch = pageText.match(/年収[：:]?\s*[\d,]+万?.*?[\d,]+万?/);
         return { jd: jd, salary: salMatch ? salMatch[0] : '' };
     }""")
-    return result.get("jd", ""), result.get("salary", "")
 
 
 def scrape(
@@ -136,9 +154,30 @@ def scrape(
         cards_data = page.evaluate(
             """
             () => {
-                const cards = document.querySelectorAll('li[data-occludable-job-id]');
                 const out = [];
                 const seen = new Set();
+                // 2026-10 新 UI（/jobs/search-results/）：class は難読化ハッシュ、
+                // id は componentkey="job-card-component-ref-{id}" にしか出ない。
+                // innerText 行 = [a11y ラベル(Selected, … (Verified job))?, title, company, location, …]
+                const strip = s => s.replace(/^Selected,\\s*/, '').replace(/\\s*\\(Verified job\\)$/i, '').trim();
+                for (const c of document.querySelectorAll('div[role="button"][componentkey^="job-card-component-ref-"]')) {
+                    const id = c.getAttribute('componentkey').replace('job-card-component-ref-', '');
+                    if (!/^\\d+$/.test(id) || seen.has(id)) continue;
+                    const lines = c.innerText.split('\\n').map(x => x.trim()).filter(Boolean);
+                    if (lines.length > 1 && strip(lines[0]) === lines[1]) lines.shift();
+                    if (!lines.length) continue;
+                    seen.add(id);
+                    out.push({
+                        id,
+                        title: strip(lines[0]),
+                        company: lines[1] || '',
+                        location: lines[2] || '',
+                        url: 'https://www.linkedin.com/jobs/view/' + id + '/',
+                    });
+                }
+                if (out.length) return out;
+
+                const cards = document.querySelectorAll('li[data-occludable-job-id]');
                 for (const c of cards) {
                     const id = c.getAttribute('data-occludable-job-id');
                     if (!id || seen.has(id)) continue;

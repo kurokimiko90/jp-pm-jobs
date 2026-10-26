@@ -31,10 +31,15 @@ from __future__ import annotations
 
 import json
 import re
+import sys
+from functools import partial
 from pathlib import Path
+
+import yaml
 
 from tools.deid import build_deid_profile
 from tools.gap_facts import _items, _load, match_evidence
+from tools.knowledge_sources import knowledge_block
 from tools.redact import redact
 
 from . import bank, critic, gates, generate, render
@@ -48,6 +53,18 @@ DRILLDOWN_PICKS = 6
 DRILLDOWN_SECOND_PICKS = 4
 # 質問文がこの割合以上重なる JD 特化問は、定番の言い換えとみなして捨てる
 DUPLICATE_THRESHOLD = 0.55
+# tune_core が結論文をここまで書き換えたら「別の問への答え」に化けたとみなし、
+# 調整前へ戻す。実測 4441: C05 キャリアビジョンが強みの答えへ差し替わった（0.03）。
+# 正しい調整（会社への接続を足しただけ）は 0.5 前後
+TUNE_MIN_SIMILARITY = 0.15
+# 生成 prompt の字数予算。全部載せると 5.7 万字になり、指揮中心の brain が
+# 総当たりの末に全滅した（実測 2026-10-18 4441: tune_core が 2 回とも失敗。
+# 10/16 に実践記録を足して以降、QA パックは 1 本も最後まで生成できていなかった）。
+# 生成側は圧縮プロフィール＋実践記録 1 本 3,500 字＋官網 4,000 字に絞る。
+# 数字の裏取り（`_material`）は全文で行うので、絞っても Gate A は緩まない。
+RESEARCH_MAX_CHARS = 4000
+KNOWLEDGE_MAX_CHARS = 3500
+PROFILE_PATH = Path(__file__).resolve().parents[2] / "data" / "candidate_profile.yaml"
 
 # JD 本文からの要件抽出（Gate B 用）。日本の求人票は見出し語が数パターンに収まるが、
 # 表記ゆれが激しい。行頭アンカー(?m)^ に固定した上で「必須」「歓迎」は括弧書き
@@ -123,13 +140,16 @@ def _job_block(job: dict, facts: str, persona_traits: list[str] | None = None,
 
 def _context(job: dict, facts: str, persona_traits: list[str] | None = None,
             product_names: list[str] | None = None) -> str:
+    """生成・是正用の文脈。字数予算内に収める（`KNOWLEDGE_MAX_CHARS` の注記）。"""
+
     block = f"""\
 {_job_block(job, facts, persona_traits, product_names)}
 {match_evidence(job)}
 
-# 応募者プロフィール（事実の出所はここだけ）
-{build_deid_profile()}
-"""
+# 応募者プロフィール（事実の出所はこの節と次の実践記録だけ）
+{build_deid_profile(compact=True)}
+
+{knowledge_block(max_chars_per_source=KNOWLEDGE_MAX_CHARS)}"""
     redacted, _ = redact(block)
     return redacted
 
@@ -155,12 +175,17 @@ def _review_context(job: dict, facts: str, persona_traits: list[str] | None = No
 def _material(context: str) -> str:
     """数字の裏取り素材 — JD・会社事実・プロフィールに加え、手書き原典も出所と認める。
 
+    プロフィールと実践記録は**全文**を足す（生成側の文脈は字数予算で絞っているが、
+    正典の手書き回答は全文プロフィール由来の数字を使うため、絞った版だけで照合すると
+    正しい数字を捏造扱いする）。
+
     正典の本文は入れない。正典自身を出所にすると、正典が持ち込んだ誤った数字を
     永久に検出できなくなる（自己参照）。
     """
 
     handwritten = "\n".join(bank.load_sources().values())
-    return context + "\n" + handwritten
+    full, _ = redact(f"{build_deid_profile()}\n{knowledge_block()}")
+    return "\n".join((context, full, handwritten))
 
 
 def _heading_bullets(jd: str, heading: re.Pattern[str], limit: int) -> list[str]:
@@ -263,12 +288,73 @@ def _used_evidence(core: list[bank.CoreAnswer], limit: int = 12) -> list[str]:
     return seen[:limit]
 
 
+def _research_facts(job: dict, pack_dir: Path) -> str:
+    """会社事実が無いとき、官網の原文を取りに行く（零 LLM・`proposal.research`）。
+
+    事実なしで生成すると、答えは JD の再話になり、最悪は自分の案件の構成を
+    御社のことのように語る（実測 4441）。人が `--facts` を用意する運用は
+    実際には回らないので、ここで自動で取る。取れなければ空のまま進める。
+    """
+
+    try:
+        from proposal import research
+        from proposal.pipeline import research_block
+        status, _res = research.run(job, pack_dir)
+        block = research_block(pack_dir, max_chars=RESEARCH_MAX_CHARS)
+    except Exception as exc:  # noqa: BLE001 — 取得失敗で pack 生成を止めない
+        print(f"  ⚠ 官網の自動取得に失敗（会社事実なしで続行）: {exc}", file=sys.stderr)
+        return ""
+    if not block:
+        return ""
+    print(f"  [facts] 官網原文を自動取得（{status}・{len(block)} 字）")
+    return f"# 公式サイトの原文（自動取得・ここに書かれていることだけが御社の事実）\n{block}"
+
+
+def _project_names() -> list[str]:
+    """個人開発の名前 — Gate J（証拠の出所）が数える。括弧内の別名も拾う。"""
+
+    try:
+        profile = yaml.safe_load(PROFILE_PATH.read_text(encoding="utf-8")) or {}
+        projects = (profile.get("proof_projects") or {}).get("projects") or []
+    except (OSError, yaml.YAMLError, AttributeError):
+        return []
+    names: list[str] = []
+    for project in projects:
+        name = str((project or {}).get("name") or "")
+        for part in re.split(r"[（()）]", name):
+            part = part.strip()
+            # 「個人 AI 自動化 OS」のような説明句は名前ではない
+            if part and not re.search(r"\s", part) and len(part) >= 4:
+                names.append(part)
+    return names
+
+
+def _keep_intent(base: list[bank.CoreAnswer],
+                 tuned: dict[str, bank.CoreAnswer]) -> tuple[list[bank.CoreAnswer], list[str]]:
+    """調整で結論文の主張が別物になった問は調整前へ戻す。戻した qid も返す。"""
+
+    kept: list[bank.CoreAnswer] = []
+    reverted: list[str] = []
+    for answer in base:
+        new = tuned.get(answer.qid)
+        if new is None:
+            kept.append(answer)
+        elif _similarity(answer.conclusion, new.conclusion) < TUNE_MIN_SIMILARITY:
+            kept.append(answer)
+            reverted.append(answer.qid)
+        else:
+            kept.append(new)
+    return kept, reverted
+
+
 def build(job: dict, facts: str, pack_dir: Path, critique: bool = True) -> dict:
     core = bank.load_core()
     if not core:
         raise RuntimeError(
             "正典題庫が空です。先に `python3 -m tools.oneoff.build_qa_core` を実行してください"
         )
+    if not facts:
+        facts = _research_facts(job, pack_dir)
 
     # 求める人物像 — LLM に読ませる（1 call）。JD に見出しが無くても、募集背景・
     # 業務内容・企業文化の書きぶりから採りたい人物像を読み取れることが多く、
@@ -287,9 +373,13 @@ def build(job: dict, facts: str, pack_dir: Path, critique: bool = True) -> dict:
 
     context = _context(job, facts, persona_traits, product_names)
     material = _material(context)
+    job_material, _ = redact(_job_block(job, facts))
+    check = partial(_check, material=material, requirements=_requirements(job),
+                    persona_traits=persona_traits, product_names=product_names,
+                    job_material=job_material, project_names=_project_names())
 
     tuned = generate.tune_core(context, [a for a in core if a.jd_dependent])
-    core = [tuned.get(answer.qid, answer) for answer in core]
+    core, reverted = _keep_intent(core, tuned)
 
     jd_items = generate.jd_specific(
         context,
@@ -304,9 +394,7 @@ def build(job: dict, facts: str, pack_dir: Path, critique: bool = True) -> dict:
     drill += generate.drilldown_second(context, drill[:DRILLDOWN_SECOND_PICKS],
                                        picks=DRILLDOWN_SECOND_PICKS)
 
-    requirements = _requirements(job)
-    report = gates.run(render.labelled(core, jd_items, drill), material, requirements,
-                       persona_traits, product_names)
+    report = check(render.labelled(core, jd_items, drill))
 
     rounds = 0
     for _ in range(MAX_REPAIR_ROUNDS):
@@ -314,15 +402,14 @@ def build(job: dict, facts: str, pack_dir: Path, critique: bool = True) -> dict:
             break
         rounds += 1
         core, jd_items, drill = _repair_round(context, report, core, jd_items, drill)
-        report = gates.run(render.labelled(core, jd_items, drill), material, requirements,
-                           persona_traits, product_names)
+        report = check(render.labelled(core, jd_items, drill))
 
     history: list[critic.Critique] = []
     adopted = 0
     if critique:
         (core, jd_items, drill), report, history, adopted = _critique_loop(
             context, _review_context(job, facts, persona_traits, product_names),
-            material, requirements, core, jd_items, drill, persona_traits, product_names)
+            check, core, jd_items, drill)
 
     company = job.get("company") or "{{要確認}}"
     text = render.render(company, core, jd_items, drill)
@@ -335,6 +422,13 @@ def build(job: dict, facts: str, pack_dir: Path, critique: bool = True) -> dict:
 
     total = len(core) + len(jd_items) + len(drill)
     audit = gates.render_report(report, total)
+    if not facts:
+        audit += ("\n## 会社事実なしで生成した\n\n官網の自動取得も失敗した。御社の事業・製品に"
+                  "触れる答えは JD の範囲でしか書けていない。`_facts.md` を置いて再生成する。\n")
+    if reverted:
+        audit += ("\n## JD 向け調整を取り消した定番問\n\n調整で結論文の主張が別物になった"
+                  "（別の問への答えに化けた）ため、調整前の答えを残した。\n\n"
+                  + "\n".join(f"- {qid}" for qid in reverted) + "\n")
     if duplicates:
         audit += "\n## 定番と重複したため捨てた JD 特化問\n\n"
         audit += "\n".join(f"- {question}" for question in duplicates) + "\n"
@@ -347,6 +441,8 @@ def build(job: dict, facts: str, pack_dir: Path, critique: bool = True) -> dict:
         "jd": len(jd_items),
         "drilldown": len(drill),
         "dropped": len(duplicates),
+        "tune_reverted": len(reverted),
+        "facts": len(facts),
         "repair_rounds": rounds,
         "blocking": len(report.blocking),
         "overused": len(report.overused),
@@ -378,6 +474,12 @@ def _problems(report: gates.GateReport) -> dict[str, str]:
     for label, terms in report.written_style.items():
         problems.setdefault(label, []).append(
             f"口に出すと浮く書面語が残っている: {' / '.join(terms)}")
+    for label, terms in report.self_undermining.items():
+        problems.setdefault(label, []).append(
+            f"自己減点（資料の話・冒頭の不足宣言）: {' / '.join(terms)}")
+    for label, numbers in report.company_claims.items():
+        problems.setdefault(label, []).append(
+            f"求人側の素材に無い数字で御社を語っている: {' / '.join(numbers)}")
     return {label: " / ".join(reasons) for label, reasons in problems.items()}
 
 
@@ -445,53 +547,68 @@ def _refine_round(context: str, critique: critic.Critique, core, jd_items, drill
     return _apply(refined, core, jd_items, drill)
 
 
-def _critique_loop(context: str, review_context: str, material: str,
-                   requirements: list[str], core, jd_items, drill,
-                   persona_traits: list[str] | None = None,
-                   product_names: list[str] | None = None):
+def _check(items, *, material: str, requirements: list[str],
+           persona_traits: list[str], product_names: list[str],
+           job_material: str, project_names: list[str]) -> gates.GateReport:
+    """機械閘門 — build 内で引数を固定して使い回す（`partial`）。"""
+
+    return gates.run(items, material, requirements, persona_traits, product_names,
+                     job_material=job_material, project_names=project_names)
+
+
+def _critique_loop(context: str, review_context: str, check, core, jd_items, drill):
     """採点 → 是正 → 再採点。良くなった版だけを採る。
 
     `context` は是正用（応募者プロフィールを含む）、`review_context` は採点用
     （求人側だけ）。渡し分けの理由は `_review_context` の説明を見ること。
+    `check` は機械閘門（`_check` を build で固定したもの）。
 
     戻り値: ((core, jd_items, drill), 機械閘門レポート, 採点履歴, 採用した巡)。
 
-    合否は問ごと（`Critique.passed`）— 1 問でも `critic.TARGET_SCORE` 未満なら
-    不合格。その巡で書き直した問（不合格だった問）の合計点が下がった巡は捨てて
-    前の版を返す（`critic.round_delta`）。改善が `critic.STALL_ROUNDS` 回続けて
-    止まったら、`critic.MAX_ROUNDS` 前でも打ち切る。批評が失敗した（None）
-    ときも前の版を返す — 「批評できなかった」を「合格」と読み替えない。
+    初回は全問を採点し、2 巡目以降は**書き直した問だけ**を採点し直す
+    （`critic.review(only=...)`）。合否は問ごと（`Critique.passed`）。書き直した問の
+    合計点が下がった巡は捨てて前の版を返す（`critic.round_delta`）。改善が
+    `critic.STALL_ROUNDS` 回続けて止まったら `critic.MAX_ROUNDS` 前でも打ち切る。
+    批評が失敗した（None）ときも前の版を返す — 「批評できなかった」を「合格」と
+    読み替えない。
     """
 
     items = render.labelled(core, jd_items, drill)
     current = critic.review(review_context, items)
     if current is None:
-        return (core, jd_items, drill), gates.run(
-            items, material, requirements, persona_traits, product_names), [], 0
+        return (core, jd_items, drill), check(items), [], 0
 
     history = [current]
     adopted = 1
     best = (core, jd_items, drill)
-    best_report = gates.run(items, material, requirements, persona_traits, product_names)
+    best_report = check(items)
     stall = 0
     for _ in range(critic.MAX_ROUNDS):
         if current.passed or not current.findings:
             break
-        targets = [item.label for item in current.failing]
+        targets = [item.label for item in current.failing
+                   if any(f.label == item.label for f in current.findings)]
+        if not targets:
+            break
         core, jd_items, drill = _refine_round(context, current, core, jd_items, drill)
         # 批評の是正が事実閘門を壊していないか見る。壊していたら 1 回だけ機械修復
-        report = gates.run(render.labelled(core, jd_items, drill), material, requirements,
-                           persona_traits, product_names)
+        report = check(render.labelled(core, jd_items, drill))
         if not report.ok:
             core, jd_items, drill = _repair_round(context, report, core, jd_items, drill)
-            report = gates.run(render.labelled(core, jd_items, drill),
-                               material, requirements, persona_traits, product_names)
-        nxt = critic.review(review_context, render.labelled(core, jd_items, drill))
+            report = check(render.labelled(core, jd_items, drill))
+        # 不合格なのに指摘の無い問（指摘の上限・却下で漏れた）も採点し直して指摘を取る。
+        # 入れないと 1 巡目で漏れた問は最後まで書き直されない（実測 6094: 57 問不合格・
+        # 書き直し 20 問、v3 で指摘 0 件となり打ち切り）。改善判定は targets だけで見る。
+        orphans = [item.label for item in current.failing
+                   if item.label not in targets][:critic.REVIEW_BATCH]
+        nxt = critic.review(review_context, render.labelled(core, jd_items, drill),
+                            previous=current, only=targets + orphans)
         if nxt is None:
             break
         history.append(nxt)
         delta = critic.round_delta(current, nxt, targets)
         if delta < 0:
+            core, jd_items, drill = best
             break  # 書き直した問の合計点が悪化 — この巡は捨てて打ち切る
         best, best_report, current = (core, jd_items, drill), report, nxt
         adopted = len(history)

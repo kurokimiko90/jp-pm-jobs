@@ -186,7 +186,7 @@ fallback。鎖檔機制、批次大小、與 `daily_job_scan.sh` 的分工細節
 ## Indeed 夜間掃描 → r-agent 突合（2026-10 新增）
 
 `scripts/indeed_nightly_scan.sh`（launchd `com.jp-pm-jobs.indeed-nightly`，每日 03:00）：
-`scrape.py --source indeed` → `tools.ragent_crossmatch`：今日新增 Indeed 職缺用公司名搜 r-agent，
+`scrape.py --source indeed` → `recruiter_agent_cdp`（Gmail 由来の r-agent 短 JD <300 字を詳細頁から補全）→ `tools.ragent_crossmatch`：今日新增 Indeed 職缺用公司名搜 r-agent，
 公司正規化一致＋標題相似度 ≥0.55 且唯一（僅差時用年收重疊絞）才把 source/source_id/url
 換成 r-agent（id 不變）。候選多筆＝不改、Telegram 列「要確認」。
 
@@ -281,6 +281,7 @@ Dashboard 用唯讀連線 (`?mode=ro`)。寫入時可能遇到 DB locked（殘�
 | `config/redaction.yaml` | 取引先ブランド名の禁止語と一般語（`tools/redact.py`） | `config/redaction.yaml.example` |
 | `config/prep.yaml` | 面接パック自動生成の ON/OFF・stage・本数・再試行（`inbox/prep_trigger.py`） | `config/prep.yaml.example` |
 | `config/salary_answer.yaml` | 年収確認メールの返信草稿に入れる現年収/希望/最低（`inbox/salary_draft.py`，零 LLM テンプレート） | `config/salary_answer.yaml.example` |
+| `config/knowledge.yaml` | 面接 QA の文脈へ足す本人の実践記録（Samurai 基礎知識稿など、`tools/knowledge_sources.py`。1 件 8,000 字上限・redact 経由） | `config/knowledge.yaml.example` |
 
 換職種/換求職偏好只需改 `config/scoring.yaml`，不需碰 `analyzer/` 原始碼。
 

@@ -16,12 +16,15 @@ from pathlib import Path
 
 from tools.deid import build_deid_profile
 from tools.gap_facts import match_evidence
+from tools.knowledge_sources import knowledge_block
 from tools.redact import redact
 
 ROOT = Path(__file__).parent.parent
 CORE_DIR = ROOT / "interview" / "question-bank" / "core"
 JD_MAX_CHARS = 6000
 FACTS_MAX_CHARS = 4000
+# 基礎知識庫（config/knowledge.yaml）の 1 件あたり字数 — 面接 QA と同じ予算
+KNOWLEDGE_MAX_CHARS = 3500
 
 # raw_jd は勤務地/給与/社会保険など、提案には要らない項目が大半を占める
 # （実測: 全体の 7〜8 割）。prompt に入れるのは「何をする仕事か」「何を
@@ -185,9 +188,20 @@ def evidence_corpus(job: dict, facts: str = "", research: str = "") -> str:
     JD 本文も含める — JD に書かれた数字を引用するのは捏造ではない。
     研究層が取ってきた官網の原文も同じ扱い（公開されている数字の引用は捏造ではない）。
     """
-    parts = [profile_text(compact=False), core_answers(), gap_block(job),
-             jd_text(job), facts or "", research or ""]
+    parts = [profile_text(compact=False), knowledge_text(full=True), core_answers(),
+             gap_block(job), jd_text(job), facts or "", research or ""]
     return "\n".join(p for p in parts if p)
+
+
+def knowledge_text(full: bool = False) -> str:
+    """本人の実践記録（基礎知識庫）。提案の具体例・数字の出所になる。
+
+    生成用は字数予算で切るが、Gate B の素材は全文 — 切った版で照合すると
+    後半にある正しい数字を捏造扱いする（interview.qa.build._material と同じ理由）。
+    """
+    text = knowledge_block() if full else knowledge_block(max_chars_per_source=KNOWLEDGE_MAX_CHARS)
+    cleaned, _ = redact(text)
+    return cleaned
 
 
 def facts_text(facts: str) -> str:
@@ -227,4 +241,9 @@ def build(job: dict, facts: str = "", *, with_profile: bool = True) -> str:
         parts += ["", "<素材 種別=\"応募者プロフィール\" "
                   "注記=\"去識別化済み・職業情報のみ\">",
                   "```yaml", profile_text(), "```", "</素材>"]
+        knowledge = knowledge_text()
+        if knowledge:
+            parts += ["", "<素材 種別=\"応募者本人の実践記録\" "
+                      "注記=\"基礎知識庫。提案の具体例・数字はここと応募者プロフィールから引く\">",
+                      knowledge, "</素材>"]
     return "\n".join(parts)

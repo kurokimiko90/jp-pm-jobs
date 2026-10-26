@@ -60,7 +60,11 @@ def open_jds(body: dict = Body(...)):
     job_ids: list[int] | None = body.get("job_ids")
     limit = min(int(body.get("limit") or DEFAULT_OPEN_LIMIT), MAX_OPEN_LIMIT)
 
-    if job_ids:
+    if job_ids is not None:
+        # 空リストを全件モードに落とすと score 範囲の上位が勝手に開く（2026-10 実測）
+        if not job_ids:
+            return {"opened": 0, "by_source": {}, "matched": 0, "limit": limit,
+                    "skipped_over_limit": 0}
         # 呼び出し側（画面に見えている順）を保つ。上限超過分は開かない。
         wanted = list(dict.fromkeys(int(i) for i in job_ids))
         placeholders = ",".join("?" * len(wanted))
